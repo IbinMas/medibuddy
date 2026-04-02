@@ -17,21 +17,23 @@ const common_1 = require("@nestjs/common");
 const jwt_auth_guard_1 = require("../common/guards/jwt-auth.guard");
 const active_tenant_guard_1 = require("../common/guards/active-tenant.guard");
 const audit_service_1 = require("./audit.service");
+const pagination_dto_1 = require("../common/dto/pagination.dto");
 let AuditController = class AuditController {
     auditService;
     constructor(auditService) {
         this.auditService = auditService;
     }
-    list(req) {
-        return this.auditService.list(req.pharmacyId ?? req.user.pharmacyId);
+    list(req, query) {
+        return this.auditService.list(req.pharmacyId ?? req.user.pharmacyId, query.page ? Number(query.page) : 1, query.limit ? Number(query.limit) : 10);
     }
 };
 exports.AuditController = AuditController;
 __decorate([
     (0, common_1.Get)(),
     __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [Object, pagination_dto_1.PaginationQueryDto]),
     __metadata("design:returntype", void 0)
 ], AuditController.prototype, "list", null);
 exports.AuditController = AuditController = __decorate([

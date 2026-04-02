@@ -9,13 +9,15 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.QueueModule = void 0;
 const common_1 = require("@nestjs/common");
 const reminder_queue_service_1 = require("./reminder-queue.service");
+const reminder_processor_1 = require("./reminder-processor");
+const reminder_cron_1 = require("./reminder.cron");
 let QueueModule = class QueueModule {
 };
 exports.QueueModule = QueueModule;
 exports.QueueModule = QueueModule = __decorate([
     (0, common_1.Global)(),
     (0, common_1.Module)({
-        providers: [reminder_queue_service_1.ReminderQueueService],
+        providers: [reminder_queue_service_1.ReminderQueueService, reminder_processor_1.ReminderProcessor, reminder_cron_1.ReminderCronService],
         exports: [reminder_queue_service_1.ReminderQueueService],
     })
 ], QueueModule);

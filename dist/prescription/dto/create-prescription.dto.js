@@ -11,11 +11,13 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreatePrescriptionDto = void 0;
 const class_validator_1 = require("class-validator");
+const client_1 = require("@prisma/client");
 class CreatePrescriptionDto {
     patientId;
     medication;
     dosage;
     frequency;
+    mealTiming;
     startDate;
     endDate;
 }
@@ -36,6 +38,11 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreatePrescriptionDto.prototype, "frequency", void 0);
+__decorate([
+    (0, class_validator_1.IsEnum)(client_1.MealTiming),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreatePrescriptionDto.prototype, "mealTiming", void 0);
 __decorate([
     (0, class_validator_1.IsDateString)(),
     __metadata("design:type", String)

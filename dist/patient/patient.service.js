@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PatientService = void 0;
 const common_1 = require("@nestjs/common");
+const client_1 = require("@prisma/client");
 const prisma_service_1 = require("../database/prisma.service");
 const encryption_1 = require("../common/crypto/encryption");
 const audit_service_1 = require("../audit/audit.service");
@@ -22,6 +23,18 @@ let PatientService = class PatientService {
         this.auditService = auditService;
     }
     async create(pharmacyId, userId, dto) {
+        const pharmacy = await this.prisma.pharmacy.findUnique({
+            where: { id: pharmacyId },
+            select: { plan: true },
+        });
+        if (pharmacy?.plan === client_1.Plan.BASIC) {
+            const count = await this.prisma.patient.count({
+                where: { pharmacyId, deletedAt: null },
+            });
+            if (count >= 50) {
+                throw new common_1.BadRequestException('Patient limit reached for Free Plan (50 patients). Please upgrade to Premium.');
+            }
+        }
         const patient = await this.prisma.patient.create({
             data: {
                 pharmacyId,

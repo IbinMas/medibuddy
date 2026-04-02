@@ -96,6 +96,13 @@ let AuthService = class AuthService {
                         id: true,
                         name: true,
                         plan: true,
+                        users: {
+                            select: {
+                                id: true,
+                                email: true,
+                                role: true,
+                            },
+                        },
                         subscriptions: {
                             where: { status: 'ACTIVE' },
                             take: 1,

@@ -15,49 +15,69 @@ const prisma_service_1 = require("../database/prisma.service");
 const encryption_1 = require("../common/crypto/encryption");
 const audit_service_1 = require("../audit/audit.service");
 const reminder_queue_service_1 = require("../queue/reminder-queue.service");
+const whatsapp_service_1 = require("../common/whatsapp/whatsapp.service");
+const sms_service_1 = require("../common/sms/sms.service");
 let PrescriptionService = class PrescriptionService {
     prisma;
     auditService;
     reminderQueue;
-    constructor(prisma, auditService, reminderQueue) {
+    whatsappService;
+    smsService;
+    constructor(prisma, auditService, reminderQueue, whatsappService, smsService) {
         this.prisma = prisma;
         this.auditService = auditService;
         this.reminderQueue = reminderQueue;
+        this.whatsappService = whatsappService;
+        this.smsService = smsService;
     }
-    async create(pharmacyId, dto) {
-        const patient = await this.prisma.patient.findFirst({
-            where: { id: dto.patientId, pharmacyId, deletedAt: null },
+    async create(pharmacyId, userId, dto) {
+        return this.bulkCreate(pharmacyId, userId, [dto]);
+    }
+    async bulkCreate(pharmacyId, userId, dtos) {
+        const results = await this.prisma.$transaction(async (tx) => {
+            const creations = [];
+            for (const dto of dtos) {
+                const p = await tx.prescription.create({
+                    data: {
+                        pharmacyId,
+                        patientId: dto.patientId,
+                        medicationEncrypted: (0, encryption_1.encrypt)(dto.medication),
+                        dosage: dto.dosage,
+                        frequency: dto.frequency,
+                        mealTiming: dto.mealTiming,
+                        startDate: new Date(dto.startDate),
+                        endDate: new Date(dto.endDate),
+                    },
+                });
+                creations.push({ ...p, medication: dto.medication });
+            }
+            return creations;
         });
-        if (!patient) {
-            throw new common_1.NotFoundException('Patient not found');
+        // Send consolidated notification
+        const firstPresc = results[0];
+        const patient = await this.prisma.patient.findUnique({ where: { id: firstPresc.patientId } });
+        const pharmacy = await this.prisma.pharmacy.findUnique({ where: { id: pharmacyId } });
+        if (patient && pharmacy && (patient.notificationMedium === 'WHATSAPP' || patient.notificationMedium === 'SMS')) {
+            // In a real scenario, we'd have a sendGroupedInitialMessage. 
+            // For now, let's reuse/adapt the logic or just loop if necessary, but the USER wants them BUNDLED.
+            // I'll add sendGroupedInitialMessage to SmsService and WhatsappService.
+            if (patient.notificationMedium === 'WHATSAPP') {
+                await this.whatsappService.sendGroupedPrescriptionMessage(patient, pharmacy, results);
+            }
+            else {
+                await this.smsService.sendGroupedPrescriptionMessage(patient, pharmacy, results);
+            }
         }
-        const prescription = await this.prisma.prescription.create({
-            data: {
-                pharmacyId,
-                patientId: dto.patientId,
-                medicationEncrypted: (0, encryption_1.encrypt)(dto.medication),
-                dosage: dto.dosage,
-                frequency: dto.frequency,
-                startDate: new Date(dto.startDate),
-                endDate: new Date(dto.endDate),
-            },
-            include: { adherence: true },
-        });
-        await this.reminderQueue.scheduleReminder({
-            pharmacyId,
-            patientId: dto.patientId,
-            prescriptionId: prescription.id,
-            scheduledAt: dto.startDate,
-            medium: patient.notificationMedium,
-        });
+        // Single Audit Log for the batch
         await this.auditService.logAction({
             pharmacyId,
+            userId,
             action: 'CREATE',
             entity: 'Prescription',
-            entityId: prescription.id,
-            metadata: { patientId: dto.patientId, dosage: dto.dosage, frequency: dto.frequency },
+            entityId: results.map(r => r.id).join(','),
+            metadata: { count: dtos.length, medications: dtos.map(d => d.medication).join(', ') },
         });
-        return prescription;
+        return results;
     }
     history(patientId, pharmacyId) {
         return this.prisma.prescription.findMany({
@@ -107,6 +127,8 @@ exports.PrescriptionService = PrescriptionService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         audit_service_1.AuditService,
-        reminder_queue_service_1.ReminderQueueService])
+        reminder_queue_service_1.ReminderQueueService,
+        whatsapp_service_1.WhatsappService,
+        sms_service_1.SmsService])
 ], PrescriptionService);
 //# sourceMappingURL=prescription.service.js.map

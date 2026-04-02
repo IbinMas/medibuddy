@@ -1,0 +1,17 @@
+nohup: ignoring input
+
+> medibuddy-v3@3.0.0 start:dev
+> ts-node-dev --respawn --transpile-only backend/src/main.ts
+
+[INFO] 22:12:43 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
+Error: listen EADDRINUSE: address already in use :::3000
+    at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+    at listenInCluster (node:net:1965:12)
+    at Server.listen (node:net:2067:7)
+    at ExpressAdapter.listen (/home/kwasi/Documents/GODISKING/node_modules/@nestjs/platform-express/adapters/express-adapter.js:95:32)
+    at /home/kwasi/Documents/GODISKING/node_modules/@nestjs/core/nest-application.js:183:30
+    at new Promise (<anonymous>)
+    at NestApplication.listen (/home/kwasi/Documents/GODISKING/node_modules/@nestjs/core/nest-application.js:173:16)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at bootstrap (/home/kwasi/Documents/GODISKING/backend/src/main.ts:22:3)
+[ERROR] 22:12:45 Error: listen EADDRINUSE: address already in use :::3000

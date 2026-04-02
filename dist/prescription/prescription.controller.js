@@ -25,7 +25,10 @@ let PrescriptionController = class PrescriptionController {
         this.prescriptionService = prescriptionService;
     }
     create(req, dto) {
-        return this.prescriptionService.create(req.pharmacyId ?? req.user.pharmacyId, dto);
+        return this.prescriptionService.create(req.pharmacyId ?? req.user.pharmacyId, req.user.id, dto);
+    }
+    bulkCreate(req, dtos) {
+        return this.prescriptionService.bulkCreate(req.pharmacyId ?? req.user.pharmacyId, req.user.id, dtos);
     }
     findAll(req, query) {
         return this.prescriptionService.findAll(req.pharmacyId ?? req.user.pharmacyId, query.page ?? 1, query.limit ?? 20, query.search);
@@ -43,6 +46,14 @@ __decorate([
     __metadata("design:paramtypes", [Object, create_prescription_dto_1.CreatePrescriptionDto]),
     __metadata("design:returntype", void 0)
 ], PrescriptionController.prototype, "create", null);
+__decorate([
+    (0, common_1.Post)('bulk'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Array]),
+    __metadata("design:returntype", void 0)
+], PrescriptionController.prototype, "bulkCreate", null);
 __decorate([
     (0, common_1.Get)(),
     __param(0, (0, common_1.Req)()),

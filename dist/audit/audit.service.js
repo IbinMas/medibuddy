@@ -25,11 +25,28 @@ let AuditService = class AuditService {
             },
         });
     }
-    list(pharmacyId) {
-        return this.prisma.auditLog.findMany({
-            where: { pharmacyId },
-            orderBy: { createdAt: 'desc' },
-        });
+    async list(pharmacyId, page = 1, limit = 50) {
+        const [data, total] = await Promise.all([
+            this.prisma.auditLog.findMany({
+                where: { pharmacyId },
+                orderBy: { createdAt: 'desc' },
+                skip: (page - 1) * limit,
+                take: limit,
+                include: {
+                    user: {
+                        select: { email: true, role: true },
+                    },
+                },
+            }),
+            this.prisma.auditLog.count({ where: { pharmacyId } }),
+        ]);
+        return {
+            data,
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit),
+        };
     }
 };
 exports.AuditService = AuditService;

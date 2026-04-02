@@ -81,7 +81,7 @@ let PharmacyService = class PharmacyService {
                         create: {
                             plan: dto.plan ?? client_1.Plan.BASIC,
                             status: client_1.SubscriptionStatus.ACTIVE,
-                            expiresAt: addDays(new Date(), dto.plan === client_1.Plan.PREMIUM ? 30 : 14),
+                            expiresAt: addDays(new Date(), 30),
                         },
                     },
                 },
