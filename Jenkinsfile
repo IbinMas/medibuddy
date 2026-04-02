@@ -191,7 +191,7 @@ pipeline {
                         slackSend(
                             color: color,
                             message: """
-                            *Security Scan Completed for* \`${env.SERVICE} - ${branchName}\`
+                            *Security Scan Completed for* `${env.SERVICE} - ${branchName}`
                             ${status}
 
                             *Backend:* CRITICAL: ${counts.backend.c} | HIGH: ${counts.backend.h} | MEDIUM: ${counts.backend.m}
@@ -335,7 +335,7 @@ pipeline {
                         slackSend(
                             color: color,
                             message: """
-                            *Security Scan Completed for PROD Images* \`${env.SERVICE}:${env.TAG_NAME}\`
+                            *Security Scan Completed for PROD Images* `${env.SERVICE}:${env.TAG_NAME}`
                             ${status}
 
                             *Backend:* CRITICAL: ${counts.backend.c} | HIGH: ${counts.backend.h} | MEDIUM: ${counts.backend.m}
