@@ -11,7 +11,7 @@ RUN npm run build
 
 # ── Stage 2: Serve with nginx ────────────────────────────────────────────────
 FROM nginx:stable-alpine AS runner
-
+ENV VITE_BACKEND_URL="https://medibuddy-api.elicitlabs.link"
 COPY --from=builder /app/dist        /usr/share/nginx/html
 COPY web/nginx.conf                  /etc/nginx/conf.d/default.conf
 
