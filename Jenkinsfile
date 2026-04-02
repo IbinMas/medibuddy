@@ -81,17 +81,27 @@ pipeline {
             when {
                 anyOf { branch 'develop'; branch 'Sprint*'; branch 'Hotfix*'; branch 'master'; branch 'main'; branch 'sprint*'; branch 'feature/*'; branch 'cicd-feature/*' }
             }
-            steps {
-                parallel(
-                    "Backend": {
+            parallel {
+                stage("Backend") {
+                    steps {
                         sh "docker build -f backend/Dockerfile -t ${env.IMAGE_BACKEND}:${env.TAG} ."
                         sh "docker push ${env.IMAGE_BACKEND}:${env.TAG}"
-                    },
-                    "Web": {
+                    }
+                }
+                stage("Web") {
+                    steps {
                         sh "docker build -f web/Dockerfile -t ${env.IMAGE_WEB}:${env.TAG} ."
                         sh "docker push ${env.IMAGE_WEB}:${env.TAG}"
                     }
-                )
+                }
+            }
+        }
+
+        stage("Prune after Dev build") {
+            when {
+                anyOf { branch 'develop'; branch 'Sprint*'; branch 'Hotfix*'; branch 'master'; branch 'main'; branch 'sprint*'; branch 'feature/*'; branch 'cicd-feature/*' }
+            }
+            steps {
                 sh "docker system prune -f"
             }
         }
@@ -235,15 +245,17 @@ pipeline {
 
         stage("Build - prod") {
             when { tag "v*" }
-            steps {
-                parallel(
-                    "Backend": {
+            parallel {
+                stage("Backend") {
+                    steps {
                         sh "docker build -f backend/Dockerfile -t ${env.imageName_BACKEND}:${env.TAG_NAME} ."
-                    },
-                    "Web": {
+                    }
+                }
+                stage("Web") {
+                    steps {
                         sh "docker build -f web/Dockerfile -t ${env.imageName_WEB}:${env.TAG_NAME} ."
                     }
-                )
+                }
             }
         }
 
