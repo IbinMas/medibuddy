@@ -1,0 +1,10 @@
+node_modules
+dist
+logs
+.git
+.gitignore
+*.md
+.env*
+!.env.example
+web/node_modules
+web/dist
