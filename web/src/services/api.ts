@@ -2,7 +2,8 @@ import axios from 'axios';
 
 // Base API instance configured for /api prefix (proxied in Vite config)
 export const api = axios.create({
-  baseURL: '/api',
+  baseURL: import.meta.env.VITE_BACKEND_URL,
+
   headers: {
     'Content-Type': 'application/json',
   },
