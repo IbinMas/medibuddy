@@ -12,12 +12,19 @@ export default function DashboardLayout() {
     ? Math.ceil((new Date(sub.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) 
     : 0;
   return (
-    <div className="min-h-screen" style={{ display: 'flex', flexDirection: 'column' }}>
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <Navbar />
       
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         {/* Sidebar */}
-        <aside style={{ width: '250px', background: 'var(--surface)', borderRight: '1px solid var(--border)', padding: '2rem 1rem' }}>
+        <aside style={{ 
+          width: '250px', 
+          background: 'var(--surface)', 
+          borderRight: '1px solid var(--border)', 
+          padding: '2rem 1rem',
+          height: '100%',
+          overflowY: 'auto'
+        }}>
           <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <NavLink to="/dashboard" end className="btn btn-outline" style={({ isActive }) => ({ justifyContent: 'flex-start', border: 'none', background: isActive ? 'var(--primary-light)' : 'transparent', color: isActive ? 'var(--primary)' : 'var(--muted)' })}>
               <LayoutDashboard size={18} /> Dashboard
