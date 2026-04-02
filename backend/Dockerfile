@@ -17,7 +17,8 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-RUN addgroup -g 1001 -S nodejs \
+RUN apk add --no-cache openssl \
+ && addgroup -g 1001 -S nodejs \
  && adduser  -S nestjs -u 1001
 
 # Copy the full node_modules (includes Prisma CLI + generated query-engine binary)
