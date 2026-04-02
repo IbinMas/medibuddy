@@ -1,0 +1,237 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Plan {
+  BASIC
+  PREMIUM
+}
+
+enum Role {
+  ADMIN
+  PHARMACIST
+  ASSISTANT
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+  EXPIRED
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  CANCELLED
+}
+
+enum AuthTokenType {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+}
+
+enum NotificationMedium {
+  NONE
+  SMS
+  WHATSAPP
+  VOICE
+}
+
+model Pharmacy {
+  id            String         @id @default(uuid())
+  name          String
+  phone         String
+  plan          Plan           @default(BASIC)
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  users         User[]
+  patients      Patient[]
+  prescriptions Prescription[]
+  subscriptions Subscription[]
+  transactions  Transaction[]
+  auditLogs     AuditLog[]
+  invites       Invite[]
+
+  @@index([phone])
+}
+
+model User {
+  id          String   @id @default(uuid())
+  email       String   @unique
+  password    String
+  role        Role
+  pharmacyId  String
+  emailVerifiedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  pharmacy    Pharmacy @relation(fields: [pharmacyId], references: [id], onDelete: Cascade)
+  auditLogs   AuditLog[]
+  createdInvites Invite[] @relation("CreatedInvites")
+  authTokens  AuthToken[]
+
+  @@index([pharmacyId])
+}
+
+model AuthToken {
+  id          String         @id @default(uuid())
+  userId      String
+  email       String
+  code        String         @unique
+  type        AuthTokenType
+  expiresAt   DateTime
+  usedAt      DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([email, type])
+  @@index([userId, type])
+}
+
+model Invite {
+  id             String       @id @default(uuid())
+  pharmacyId     String
+  email          String
+  role           Role
+  code           String       @unique
+  status         InviteStatus @default(PENDING)
+  expiresAt      DateTime
+  acceptedAt     DateTime?
+  createdByUserId String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  pharmacy       Pharmacy     @relation(fields: [pharmacyId], references: [id], onDelete: Cascade)
+  createdBy      User?        @relation("CreatedInvites", fields: [createdByUserId], references: [id], onDelete: SetNull)
+
+  @@index([pharmacyId, email])
+  @@index([pharmacyId, status])
+}
+
+model Patient {
+  id                String         @id @default(uuid())
+  pharmacyId        String
+  firstNameEncrypted String
+  lastNameEncrypted  String
+  phoneEncrypted    String
+  allergiesEncrypted String?
+  notesEncrypted    String?
+  notificationMedium NotificationMedium @default(NONE)
+  deletedAt         DateTime?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  pharmacy          Pharmacy       @relation(fields: [pharmacyId], references: [id], onDelete: Cascade)
+  prescriptions     Prescription[]
+
+  @@index([pharmacyId])
+}
+
+enum MealTiming {
+  BEFORE_MEAL
+  AFTER_MEAL
+}
+
+enum DeliveryStatus {
+  PENDING
+  DELIVERED
+  FAILED
+}
+
+model Prescription {
+  id             String         @id @default(uuid())
+  patientId      String
+  pharmacyId     String
+  medicationEncrypted String
+  dosage        String
+  frequency     String
+  mealTiming    MealTiming?
+  startDate     DateTime
+  endDate       DateTime
+  deliveryStatus DeliveryStatus @default(PENDING)
+  messageId      String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  patient       Patient        @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  pharmacy      Pharmacy       @relation(fields: [pharmacyId], references: [id], onDelete: Cascade)
+  adherence     Adherence[]
+
+  @@index([patientId, pharmacyId])
+}
+
+model Adherence {
+  id             String       @id @default(uuid())
+  prescriptionId String
+  taken          Boolean      @default(false)
+  scheduledAt    DateTime
+  respondedAt    DateTime?
+  createdAt      DateTime     @default(now())
+
+  prescription   Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+
+  @@index([prescriptionId, scheduledAt])
+}
+
+model Transaction {
+  id          String             @id @default(uuid())
+  pharmacyId  String
+  amount      Float
+  status      TransactionStatus  @default(PENDING)
+  reference   String             @unique
+  provider    String
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  pharmacy    Pharmacy           @relation(fields: [pharmacyId], references: [id], onDelete: Cascade)
+
+  @@index([pharmacyId, status])
+}
+
+model Subscription {
+  id          String             @id @default(uuid())
+  pharmacyId  String
+  plan        Plan               @default(BASIC)
+  status      SubscriptionStatus @default(ACTIVE)
+  expiresAt   DateTime
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  pharmacy    Pharmacy           @relation(fields: [pharmacyId], references: [id], onDelete: Cascade)
+
+  @@index([pharmacyId, status])
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  pharmacyId  String
+  userId      String?
+  action      String
+  entity      String
+  entityId    String
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  pharmacy    Pharmacy @relation(fields: [pharmacyId], references: [id], onDelete: Cascade)
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([pharmacyId, entity, entityId])
+}
