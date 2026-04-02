@@ -104,7 +104,7 @@ export default function TenantDashboard() {
           <ResponsiveContainer width="100%" height="80%">
             <BarChart data={[
               { name: 'Patients', value: metrics?.patients || 0 },
-              { name: 'Scripts', value: metrics?.prescriptions || 0 },
+              { name: 'Prescriptions', value: metrics?.prescriptions || 0 },
               { name: 'Payments', value: metrics?.transactions || 0 }
             ]}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
