@@ -1,0 +1,75 @@
+services:
+
+  backend:
+    image: reg-aml.esoko.com/deveops-test.img/medibuddy-backend:alpha
+    restart: unless-stopped
+    environment:
+      NODE_ENV:                    production
+      # Database
+      DATABASE_URL:                ${DATABASE_URL}
+      POSTGRES_HOST:               ${POSTGRES_HOST}
+      POSTGRES_PORT:               ${POSTGRES_PORT}
+      POSTGRES_USER:               ${POSTGRES_USER}
+      POSTGRES_PASSWORD:           ${POSTGRES_PASSWORD}
+      POSTGRES_DB:                 ${POSTGRES_DB}
+      # Redis
+      REDIS_HOST:                  ${REDIS_HOST}
+      REDIS_PORT:                  ${REDIS_PORT}
+      # Auth
+      JWT_SECRET:                  ${JWT_SECRET}
+      FIELD_ENCRYPT_KEY:           ${FIELD_ENCRYPT_KEY}
+      # Mail
+      SMTP_HOST:                   ${SMTP_HOST}
+      SMTP_PORT:                   ${SMTP_PORT}
+      SMTP_SECURE:                 ${SMTP_SECURE}
+      SMTP_USER:                   ${SMTP_USER}
+      SMTP_PASS:                   ${SMTP_PASS}
+      MAIL_FROM:                   ${MAIL_FROM}
+      # WhatsApp
+      WHATSAPP_ACCESS_TOKEN:       ${WHATSAPP_ACCESS_TOKEN}
+      WHATSAPP_PHONE_NUMBER_ID:    ${WHATSAPP_PHONE_NUMBER_ID}
+      WHATSAPP_TEMPLATE_NAME:      ${WHATSAPP_TEMPLATE_NAME}
+      WHATSAPP_API_VERSION:        ${WHATSAPP_API_VERSION}
+      WHATSAPP_WEBHOOK_VERIFY_TOKEN: ${WHATSAPP_WEBHOOK_VERIFY_TOKEN}
+      # SMS
+      SMS_API_KEY:                 ${SMS_API_KEY}
+      SMS_SENDER_ID:               ${SMS_SENDER_ID}
+      SMS_API_URL:                 ${SMS_API_URL}
+      # App
+      APP_URL:                     ${APP_URL}
+    volumes:
+      - logs:/app/logs
+    expose:
+      - "3000"
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  web:
+    image: reg-aml.esoko.com/deveops-test.img/medibuddy-web:alpha
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.medibuddy.rule=Host(`medibuddy.elicitlabs.link`)"
+      - "traefik.http.routers.medibuddy.entrypoints=websecure"
+      - "traefik.http.routers.medibuddy.tls.certresolver=myresolver"
+      - "com.centurylinklabs.watchtower.enable=true"
+    networks:
+      - internal
+
+volumes:
+  logs:
+
+networks:
+  internal:
+    driver: bridge
