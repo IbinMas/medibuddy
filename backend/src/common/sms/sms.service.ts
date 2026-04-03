@@ -8,7 +8,9 @@ export class SmsService {
 
   private readonly smsApiKey = process.env.SMS_API_KEY;
   private readonly smsSenderId = process.env.SMS_SENDER_ID || 'MediBuddy';
-  private readonly smsApiUrl = process.env.SMS_API_URL || 'https://sms.arkesel.com/sms/api';
+  // Use the exact URL provided by the user, but Arkesel is the correct spelling for the official service.
+  // We'll use the user's provided URL format.
+  private readonly smsApiUrl = 'https://sms.arkesel.com/api/v2/sms/send';
 
   async sendPrescriptionMessage(patient: any, pharmacy: any, prescription: any) {
     const firstName = decrypt(patient.firstNameEncrypted).trim();
@@ -27,14 +29,27 @@ export class SmsService {
     }
 
     try {
-      const url = `${this.smsApiUrl}?action=send-sms&api_key=${this.smsApiKey}&to=${phone}&from=${this.smsSenderId}&sms=${encodeURIComponent(message)}`;
-      
-      const response = await axios.get(url);
+      const response = await axios.post(
+        this.smsApiUrl,
+        {
+          sender: this.smsSenderId,
+          message: message,
+          recipients: [phone],
+        },
+        {
+          headers: {
+            'api-key': this.smsApiKey,
+            'Authorization': `Bearer ${this.smsApiKey}`,
+          },
+        },
+      );
 
-      this.logger.log(`SMS sent to ${phone}. URL: ${url.replace(this.smsApiKey as string, 'REDACTED')}`);
-      this.logger.log(`Response: ${JSON.stringify(response.data)}`);
+      this.logger.log(`SMS sent to ${phone}. Response: ${JSON.stringify(response.data)}`);
       
-      return { success: true, data: response.data };
+      const resData = response.data.data;
+      const messageId = (Array.isArray(resData) ? resData[0]?.id : resData?.id) || response.data.id || response.data.main_id;
+
+      return { success: true, data: response.data, messageId };
     } catch (error: any) {
       this.logger.error(
         `Failed to send SMS to ${phone}: ${error.message}`,
@@ -57,10 +72,26 @@ export class SmsService {
     }
 
     try {
-      const url = `${this.smsApiUrl}?action=send-sms&api_key=${this.smsApiKey}&to=${phone}&from=${this.smsSenderId}&sms=${encodeURIComponent(message)}`;
-      const response = await axios.get(url);
+      const response = await axios.post(
+        this.smsApiUrl,
+        {
+          sender: this.smsSenderId,
+          message: message,
+          recipients: [phone],
+        },
+        {
+          headers: {
+            'api-key': this.smsApiKey,
+            'Authorization': `Bearer ${this.smsApiKey}`,
+          },
+        },
+      );
       this.logger.log(`Grouped SMS sent to ${phone}. Response: ${JSON.stringify(response.data)}`);
-      return { success: true, data: response.data };
+      
+      const resData = response.data.data;
+      const messageId = (Array.isArray(resData) ? resData[0]?.id : resData?.id) || response.data.id || response.data.main_id;
+
+      return { success: true, data: response.data, messageId };
     } catch (error: any) {
       this.logger.error(`Failed to send Grouped SMS to ${phone}: ${error.message}`);
       return { success: false, error: error.message };
@@ -82,15 +113,55 @@ export class SmsService {
     }
 
     try {
-      const url = `${this.smsApiUrl}?action=send-sms&api_key=${this.smsApiKey}&to=${phone}&from=${this.smsSenderId}&sms=${encodeURIComponent(message)}`;
-      
-      const response = await axios.get(url);
+      const response = await axios.post(
+        this.smsApiUrl,
+        {
+          sender: this.smsSenderId,
+          message: message,
+          recipients: [phone],
+        },
+        {
+          headers: {
+            'api-key': this.smsApiKey,
+            'Authorization': `Bearer ${this.smsApiKey}`,
+          },
+        },
+      );
 
       this.logger.log(`SMS Grouped Reminder sent to ${phone}. Response: ${JSON.stringify(response.data)}`);
-      return { success: true, data: response.data };
+      
+      const resData = response.data.data;
+      const messageId = (Array.isArray(resData) ? resData[0]?.id : resData?.id) || response.data.id || response.data.main_id;
+
+      return { success: true, data: response.data, messageId };
     } catch (error: any) {
       this.logger.error(`Failed to send SMS Grouped Reminder: ${error.message}`);
       return { success: false, error: error.message };
+    }
+  }
+
+  async getSmsStatus(messageId: string) {
+    if (!this.smsApiKey || !messageId) {
+      return null;
+    }
+
+    try {
+      const url = `https://sms.arkesel.com/api/v2/sms/${messageId}`;
+      const response = await axios.get(url, {
+        headers: {
+          'api-key': this.smsApiKey,
+        },
+      });
+      
+      const data = response.data;
+      this.logger.log(`Status for ${messageId}: ${JSON.stringify(data)}`);
+
+      // Extracts the status from the nested data object: response.data.data.status
+      const status = data.data?.status || data.status;
+      return status ? String(status).trim().toUpperCase() : null;
+    } catch (error: any) {
+      this.logger.error(`Failed to check SMS status for ${messageId}: ${error.message}`);
+      return null;
     }
   }
 

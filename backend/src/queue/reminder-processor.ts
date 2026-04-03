@@ -2,6 +2,7 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Worker, Job } from 'bullmq';
 import { PrismaService } from '../database/prisma.service';
 import { WhatsappService } from '../common/whatsapp/whatsapp.service';
+import { SmsService } from '../common/sms/sms.service';
 
 @Injectable()
 export class ReminderProcessor implements OnModuleInit {
@@ -10,6 +11,7 @@ export class ReminderProcessor implements OnModuleInit {
   constructor(
     private readonly prisma: PrismaService,
     private readonly whatsappService: WhatsappService,
+    private readonly smsService: SmsService,
   ) {}
 
   async onModuleInit() {
@@ -64,6 +66,14 @@ export class ReminderProcessor implements OnModuleInit {
 
     if (data.medium === 'WHATSAPP') {
       await this.whatsappService.sendPrescriptionMessage(patient, pharmacy, prescription);
+    } else if (data.medium === 'SMS') {
+      const smsResponse = await this.smsService.sendPrescriptionMessage(patient, pharmacy, prescription);
+      if (smsResponse.success && smsResponse.messageId) {
+        await this.prisma.prescription.update({
+          where: { id: prescription.id },
+          data: { messageId: String(smsResponse.messageId) }
+        });
+      }
     } else {
       this.logger.warn(`Medium [${data.medium}] not yet implemented in worker.`);
     }

@@ -87,12 +87,18 @@ export class ReminderCronService {
             currentHourString
           );
         } else if (patient.notificationMedium === 'SMS') {
-          await this.smsService.sendGroupedReminderMessage(
+          const smsResponse = await this.smsService.sendGroupedReminderMessage(
             patient,
             pharmacy,
             prescriptions,
             currentHourString
           );
+          if (smsResponse.success && smsResponse.messageId) {
+            await this.prisma.prescription.updateMany({
+              where: { id: { in: prescriptions.map(p => p.id) } },
+              data: { messageId: String(smsResponse.messageId) }
+            });
+          }
         }
       }
     } catch (error) {

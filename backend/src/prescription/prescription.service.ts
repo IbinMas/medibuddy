@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { encrypt, decrypt } from '../common/crypto/encryption';
 import { CreatePrescriptionDto } from './dto/create-prescription.dto';
@@ -9,6 +9,8 @@ import { SmsService } from '../common/sms/sms.service';
 
 @Injectable()
 export class PrescriptionService {
+  private readonly logger = new Logger(PrescriptionService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditService: AuditService,
@@ -53,8 +55,23 @@ export class PrescriptionService {
       // I'll add sendGroupedInitialMessage to SmsService and WhatsappService.
       if (patient.notificationMedium === 'WHATSAPP') {
         await this.whatsappService.sendGroupedPrescriptionMessage(patient, pharmacy, results);
-      } else {
-        await this.smsService.sendGroupedPrescriptionMessage(patient, pharmacy, results);
+      } else if (patient.notificationMedium === 'SMS') {
+        this.logger.log(`Sending grouped SMS for ${results.length} prescriptions...`);
+        const smsResponse = await this.smsService.sendGroupedPrescriptionMessage(patient, pharmacy, results);
+        this.logger.log(`SMS Response: ${JSON.stringify(smsResponse)}`);
+
+        if (smsResponse.success && smsResponse.messageId) {
+          const ids = results.map(r => r.id);
+          this.logger.log(`Updating ${ids.length} prescriptions with messageId: ${smsResponse.messageId}. IDs: ${ids.join(', ')}`);
+          
+          const updateResult = await this.prisma.prescription.updateMany({
+            where: { id: { in: ids } },
+            data: { messageId: String(smsResponse.messageId) }
+          });
+          this.logger.log(`Update call finished. count: ${updateResult.count}`);
+        } else {
+          this.logger.warn(`Failed to update prescriptions: Success=${smsResponse.success}, messageId=${smsResponse.messageId}, mode=${(smsResponse as any).mode}`);
+        }
       }
     }
 
