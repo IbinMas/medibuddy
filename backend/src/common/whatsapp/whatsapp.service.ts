@@ -1,5 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { decrypt } from '../crypto/encryption';
+import { CommunicationService } from '../communication/communication.service';
+import { NotificationMedium, DeliveryStatus } from '@prisma/client';
 import axios from 'axios';
 
 @Injectable()
@@ -9,6 +11,8 @@ export class WhatsappService {
   private readonly accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
   private readonly phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
   private readonly apiVersion = process.env.WHATSAPP_API_VERSION || 'v20.0';
+
+  constructor(private readonly communicationService: CommunicationService) {}
 
   async sendPrescriptionMessage(patient: any, pharmacy: any, prescription: any) {
     const firstName = decrypt(patient.firstNameEncrypted).trim();
@@ -74,12 +78,35 @@ export class WhatsappService {
         },
       });
 
-      this.logger.log(`WhatsApp Template sent to ${phone}. Message ID: ${response.data.messages[0]?.id}`);
-      return { success: true, messageId: response.data.messages[0]?.id };
+      const messageId = response.data.messages[0]?.id;
+      this.logger.log(`WhatsApp Template sent to ${phone}. Message ID: ${messageId}`);
+
+      await this.communicationService.logMessage({
+        pharmacyId: pharmacy.id,
+        patientId: patient.id,
+        prescriptionId: prescription.id,
+        medium: NotificationMedium.WHATSAPP,
+        providerId: messageId ? String(messageId) : undefined,
+        status: DeliveryStatus.PENDING,
+        content: message,
+      });
+
+      return { success: true, messageId };
     } catch (error: any) {
+      const errorMsg = error.response?.data?.error?.message || error.message;
       this.logger.error(
-        `Failed to send WhatsApp Template to ${phone}: ${error.response?.data?.error?.message || error.message}`,
+        `Failed to send WhatsApp Template to ${phone}: ${errorMsg}`,
       );
+
+      await this.communicationService.logMessage({
+        pharmacyId: pharmacy.id,
+        patientId: patient.id,
+        prescriptionId: prescription.id,
+        medium: NotificationMedium.WHATSAPP,
+        status: DeliveryStatus.FAILED,
+        content: message,
+      });
+
       return { success: false, error: error.response?.data?.error || error.message };
     }
   }
@@ -139,12 +166,31 @@ export class WhatsappService {
         },
       });
 
-      this.logger.log(`WhatsApp Grouped Prescription sent to ${phone}. Message ID: ${response.data.messages[0]?.id}`);
-      return { success: true, messageId: response.data.messages[0]?.id };
+      const messageId = response.data.messages[0]?.id;
+      this.logger.log(`WhatsApp Grouped Prescription sent to ${phone}. Message ID: ${messageId}`);
+
+      await this.communicationService.logMessage({
+        pharmacyId: pharmacy.id,
+        patientId: patient.id,
+        medium: NotificationMedium.WHATSAPP,
+        providerId: messageId ? String(messageId) : undefined,
+        status: DeliveryStatus.PENDING,
+        content: message,
+      });
+
+      return { success: true, messageId };
     } catch (error: any) {
-      this.logger.error(
-        `Failed to send WhatsApp Grouped Prescription to ${phone}: ${error.response?.data?.error?.message || error.message}`,
-      );
+      const errorMsg = error.response?.data?.error?.message || error.message;
+      this.logger.error(`Failed to send WhatsApp Grouped Prescription to ${phone}: ${errorMsg}`);
+
+      await this.communicationService.logMessage({
+        pharmacyId: pharmacy.id,
+        patientId: patient.id,
+        medium: NotificationMedium.WHATSAPP,
+        status: DeliveryStatus.FAILED,
+        content: message,
+      });
+
       return { success: false, error: error.response?.data?.error || error.message };
     }
   }
@@ -204,12 +250,31 @@ export class WhatsappService {
         },
       });
 
-      this.logger.log(`WhatsApp Grouped Reminder sent to ${phone}. Message ID: ${response.data.messages[0]?.id}`);
-      return { success: true, messageId: response.data.messages[0]?.id };
+      const messageId = response.data.messages[0]?.id;
+      this.logger.log(`WhatsApp Grouped Reminder sent to ${phone}. Message ID: ${messageId}`);
+
+      await this.communicationService.logMessage({
+        pharmacyId: pharmacy.id,
+        patientId: patient.id,
+        medium: NotificationMedium.WHATSAPP,
+        providerId: messageId ? String(messageId) : undefined,
+        status: DeliveryStatus.PENDING,
+        content: message,
+      });
+
+      return { success: true, messageId };
     } catch (error: any) {
-      this.logger.error(
-        `Failed to send WhatsApp Grouped Template to ${phone}: ${error.response?.data?.error?.message || error.message}`,
-      );
+      const errorMsg = error.response?.data?.error?.message || error.message;
+      this.logger.error(`Failed to send WhatsApp Grouped Template to ${phone}: ${errorMsg}`);
+
+      await this.communicationService.logMessage({
+        pharmacyId: pharmacy.id,
+        patientId: patient.id,
+        medium: NotificationMedium.WHATSAPP,
+        status: DeliveryStatus.FAILED,
+        content: message,
+      });
+
       return { success: false, error: error.response?.data?.error || error.message };
     }
   }

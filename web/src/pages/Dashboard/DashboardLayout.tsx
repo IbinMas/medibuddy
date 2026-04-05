@@ -1,6 +1,6 @@
 import { Outlet, NavLink } from 'react-router-dom';
 import Navbar from '../../components/Navbar';
-import { Users, Pill, Settings as SettingsIcon, LayoutDashboard, BarChart3, Clock, AlertTriangle, ClipboardList } from 'lucide-react';
+import { Users, Pill, Settings as SettingsIcon, LayoutDashboard, BarChart3, Clock, AlertTriangle, ClipboardList, MessageSquare } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { Link } from 'react-router-dom';
 
@@ -43,6 +43,9 @@ export default function DashboardLayout() {
                 <ClipboardList size={18} /> Audit Trail
               </NavLink>
             )}
+            <NavLink to="/dashboard/communications" className="btn btn-outline" style={({ isActive }) => ({ justifyContent: 'flex-start', border: 'none', background: isActive ? 'var(--primary-light)' : 'transparent', color: isActive ? 'var(--primary)' : 'var(--muted)' })}>
+              <MessageSquare size={18} /> Messages
+            </NavLink>
             <NavLink to="/dashboard/settings" className="btn btn-outline" style={({ isActive }) => ({ justifyContent: 'flex-start', border: 'none', background: isActive ? 'var(--primary-light)' : 'transparent', color: isActive ? 'var(--primary)' : 'var(--muted)' })}>
               <SettingsIcon size={18} /> Settings
             </NavLink>

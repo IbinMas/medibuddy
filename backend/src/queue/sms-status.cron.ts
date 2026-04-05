@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../database/prisma.service';
 import { SmsService } from '../common/sms/sms.service';
+import { CommunicationService } from '../common/communication/communication.service';
 import { DeliveryStatus } from '@prisma/client';
 
 @Injectable()
@@ -11,6 +12,7 @@ export class SmsStatusCronService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly smsService: SmsService,
+    private readonly communicationService: CommunicationService,
   ) {}
 
   @Cron(CronExpression.EVERY_5_MINUTES)
@@ -59,6 +61,9 @@ export class SmsStatusCronService {
             where: { messageId: presc.messageId },
             data: { deliveryStatus: newStatus },
           });
+          
+          await this.communicationService.updateStatus(presc.messageId, newStatus);
+          
           this.logger.log(`Updated status for messageId ${presc.messageId} to ${newStatus}`);
         }
       }

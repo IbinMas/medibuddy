@@ -194,3 +194,15 @@
 {"level":"error","message":"Failed to check SMS status for fcfeabbd-c851-41b1-ac81-bf3a3305f2a5: Request failed with status code 404","timestamp":"2026-04-03T08:10:01.296Z"}
 {"level":"error","message":"Failed to check SMS status for fcfeabbd-c851-41b1-ac81-bf3a3305f2a5: getaddrinfo ENOTFOUND sms.arkasel.com","timestamp":"2026-04-03T08:15:00.323Z"}
 {"level":"error","message":"Failed to check SMS status for fcfeabbd-c851-41b1-ac81-bf3a3305f2a5: getaddrinfo ENOTFOUND sms.arkasel.com","timestamp":"2026-04-03T08:20:00.154Z"}
+{"level":"error","message":"Failed to check SMS status for 11522414-e8ae-428e-8ec4-18fd37b24e25: getaddrinfo EAI_AGAIN sms.arkesel.com","timestamp":"2026-04-03T08:40:00.082Z"}
+{"exception":{"message":"Invalid credentials","name":"UnauthorizedException","options":{},"response":{"error":"Unauthorized","message":"Invalid credentials","statusCode":401},"status":401},"level":"error","message":"Unhandled exception","status":401,"timestamp":"2026-04-05T12:16:36.316Z"}
+{"exception":{},"level":"error","message":"Unhandled exception","status":500,"timestamp":"2026-04-05T12:16:49.520Z"}
+{"exception":{},"level":"error","message":"Unhandled exception","status":500,"timestamp":"2026-04-05T12:16:49.521Z"}
+{"exception":{},"level":"error","message":"Unhandled exception","status":500,"timestamp":"2026-04-05T12:18:00.348Z"}
+{"exception":{},"level":"error","message":"Unhandled exception","status":500,"timestamp":"2026-04-05T12:18:00.349Z"}
+{"exception":{},"level":"error","message":"Unhandled exception","status":500,"timestamp":"2026-04-05T12:32:14.019Z"}
+{"exception":{},"level":"error","message":"Unhandled exception","status":500,"timestamp":"2026-04-05T12:32:14.021Z"}
+{"exception":{},"level":"error","message":"Unhandled exception","status":500,"timestamp":"2026-04-05T12:32:52.198Z"}
+{"exception":{},"level":"error","message":"Unhandled exception","status":500,"timestamp":"2026-04-05T12:32:52.199Z"}
+{"exception":{},"level":"error","message":"Unhandled exception","status":500,"timestamp":"2026-04-05T12:37:13.284Z"}
+{"exception":{},"level":"error","message":"Unhandled exception","status":500,"timestamp":"2026-04-05T12:37:13.285Z"}

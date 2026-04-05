@@ -12,6 +12,7 @@ import Analytics from './pages/Dashboard/Analytics';
 import PrescriptionList from './pages/Dashboard/Prescriptions/PrescriptionList';
 import Settings from './pages/Dashboard/Settings';
 import AuditLogs from './pages/Dashboard/AuditLogs';
+import Communications from './pages/Dashboard/Communications';
 import { useAuth } from './hooks/useAuth';
 
 import { useLocation } from 'react-router-dom';
@@ -53,6 +54,7 @@ function App() {
           <Route path="analytics" element={<Analytics />} />
           <Route path="prescriptions" element={<PrescriptionList />} />
           <Route path="audit-logs" element={<AuditLogs />} />
+          <Route path="communications" element={<Communications />} />
           <Route path="settings" element={<Settings />} />
         </Route>
       </Routes>

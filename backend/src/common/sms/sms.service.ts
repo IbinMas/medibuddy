@@ -1,5 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { decrypt } from '../crypto/encryption';
+import { CommunicationService } from '../communication/communication.service';
+import { NotificationMedium, DeliveryStatus } from '@prisma/client';
 import axios from 'axios';
 
 @Injectable()
@@ -11,6 +13,8 @@ export class SmsService {
   // Use the exact URL provided by the user, but Arkesel is the correct spelling for the official service.
   // We'll use the user's provided URL format.
   private readonly smsApiUrl = 'https://sms.arkesel.com/api/v2/sms/send';
+
+  constructor(private readonly communicationService: CommunicationService) {}
 
   async sendPrescriptionMessage(patient: any, pharmacy: any, prescription: any) {
     const firstName = decrypt(patient.firstNameEncrypted).trim();
@@ -49,11 +53,31 @@ export class SmsService {
       const resData = response.data.data;
       const messageId = (Array.isArray(resData) ? resData[0]?.id : resData?.id) || response.data.id || response.data.main_id;
 
+      await this.communicationService.logMessage({
+        pharmacyId: pharmacy.id,
+        patientId: patient.id,
+        prescriptionId: prescription.id,
+        medium: NotificationMedium.SMS,
+        providerId: messageId ? String(messageId) : undefined,
+        status: DeliveryStatus.PENDING,
+        content: message,
+      });
+
       return { success: true, data: response.data, messageId };
     } catch (error: any) {
       this.logger.error(
         `Failed to send SMS to ${phone}: ${error.message}`,
       );
+
+      await this.communicationService.logMessage({
+        pharmacyId: pharmacy.id,
+        patientId: patient.id,
+        prescriptionId: prescription.id,
+        medium: NotificationMedium.SMS,
+        status: DeliveryStatus.FAILED,
+        content: message,
+      });
+
       return { success: false, error: error.message };
     }
   }
@@ -91,9 +115,27 @@ export class SmsService {
       const resData = response.data.data;
       const messageId = (Array.isArray(resData) ? resData[0]?.id : resData?.id) || response.data.id || response.data.main_id;
 
+      await this.communicationService.logMessage({
+        pharmacyId: pharmacy.id,
+        patientId: patient.id,
+        medium: NotificationMedium.SMS,
+        providerId: messageId ? String(messageId) : undefined,
+        status: DeliveryStatus.PENDING,
+        content: message,
+      });
+
       return { success: true, data: response.data, messageId };
     } catch (error: any) {
       this.logger.error(`Failed to send Grouped SMS to ${phone}: ${error.message}`);
+
+      await this.communicationService.logMessage({
+        pharmacyId: pharmacy.id,
+        patientId: patient.id,
+        medium: NotificationMedium.SMS,
+        status: DeliveryStatus.FAILED,
+        content: message,
+      });
+
       return { success: false, error: error.message };
     }
   }
@@ -133,9 +175,27 @@ export class SmsService {
       const resData = response.data.data;
       const messageId = (Array.isArray(resData) ? resData[0]?.id : resData?.id) || response.data.id || response.data.main_id;
 
+      await this.communicationService.logMessage({
+        pharmacyId: pharmacy.id,
+        patientId: patient.id,
+        medium: NotificationMedium.SMS,
+        providerId: messageId ? String(messageId) : undefined,
+        status: DeliveryStatus.PENDING,
+        content: message,
+      });
+
       return { success: true, data: response.data, messageId };
     } catch (error: any) {
       this.logger.error(`Failed to send SMS Grouped Reminder: ${error.message}`);
+
+      await this.communicationService.logMessage({
+        pharmacyId: pharmacy.id,
+        patientId: patient.id,
+        medium: NotificationMedium.SMS,
+        status: DeliveryStatus.FAILED,
+        content: message,
+      });
+
       return { success: false, error: error.message };
     }
   }

@@ -6,12 +6,13 @@ import { ActiveTenantGuard } from './guards/active-tenant.guard';
 import { WhatsappService } from './whatsapp/whatsapp.service';
 import { WhatsappWebhookController } from './webhook/whatsapp-webhook.controller';
 import { SmsService } from './sms/sms.service';
+import { CommunicationModule } from './communication/communication.module';
 
 @Global()
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, CommunicationModule],
   controllers: [WhatsappWebhookController],
   providers: [TenantGuard, RolesGuard, ActiveTenantGuard, WhatsappService, SmsService],
-  exports: [TenantGuard, RolesGuard, ActiveTenantGuard, WhatsappService, SmsService],
+  exports: [TenantGuard, RolesGuard, ActiveTenantGuard, WhatsappService, SmsService, CommunicationModule],
 })
 export class CommonModule {}

@@ -67,6 +67,7 @@ model Pharmacy {
   transactions  Transaction[]
   auditLogs     AuditLog[]
   invites       Invite[]
+  communicationLogs CommunicationLog[]
 
   @@index([phone])
 }
@@ -141,6 +142,7 @@ model Patient {
 
   pharmacy          Pharmacy       @relation(fields: [pharmacyId], references: [id], onDelete: Cascade)
   prescriptions     Prescription[]
+  communicationLogs CommunicationLog[]
 
   @@index([pharmacyId])
 }
@@ -174,6 +176,7 @@ model Prescription {
   patient       Patient        @relation(fields: [patientId], references: [id], onDelete: Cascade)
   pharmacy      Pharmacy       @relation(fields: [pharmacyId], references: [id], onDelete: Cascade)
   adherence     Adherence[]
+  communicationLogs CommunicationLog[]
 
   @@index([patientId, pharmacyId])
 }
@@ -234,4 +237,24 @@ model AuditLog {
   user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([pharmacyId, entity, entityId])
+}
+model CommunicationLog {
+  id             String           @id @default(uuid())
+  pharmacyId     String
+  patientId      String
+  prescriptionId String?
+  medium         NotificationMedium
+  providerId     String?          @unique
+  status         DeliveryStatus   @default(PENDING)
+  content        String
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  pharmacy       Pharmacy         @relation(fields: [pharmacyId], references: [id], onDelete: Cascade)
+  patient        Patient          @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  prescription   Prescription?    @relation(fields: [prescriptionId], references: [id], onDelete: SetNull)
+
+  @@index([pharmacyId, createdAt])
+  @@index([patientId, createdAt])
+  @@index([providerId])
 }
