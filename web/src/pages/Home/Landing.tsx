@@ -9,25 +9,25 @@ export default function Landing() {
     <div className="min-h-screen">
       <Navbar />
       
-      <main className="container animate-fade-in" style={{ padding: '4rem 1rem', textAlign: 'center' }}>
-        <h1 style={{ fontSize: '3.5rem', marginBottom: '1.5rem', background: 'linear-gradient(135deg, var(--primary), var(--secondary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+      <main className="container animate-fade-in" style={{ padding: '2rem 1rem', textAlign: 'center' }}>
+        <h1 style={{ fontSize: 'min(3.5rem, 10vw)', marginBottom: '1.5rem', background: 'linear-gradient(135deg, var(--primary), var(--secondary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1.1 }}>
           Next-Gen Pharmacy Management
         </h1>
-        <p style={{ fontSize: '1.25rem', color: 'var(--muted)', maxWidth: '600px', margin: '0 auto 3rem auto' }}>
+        <p style={{ fontSize: '1.1rem', color: 'var(--muted)', maxWidth: '600px', margin: '0 auto 2.5rem auto' }}>
           Streamline operations, track prescriptions, and scale your healthcare business with our multi-tenant SaaS platform.
         </p>
         
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '5rem' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '1rem', marginBottom: '4rem' }}>
           {isAuthenticated ? (
-            <Link to="/dashboard" className="btn btn-primary" style={{ padding: '1rem 2rem', fontSize: '1.1rem' }}>
+            <Link to="/dashboard" className="btn btn-primary" style={{ padding: '0.9rem 2rem', fontSize: '1.1rem', width: 'auto', minWidth: '200px' }}>
               Go to Dashboard
             </Link>
           ) : (
             <>
-              <Link to="/onboard" className="btn btn-primary" style={{ padding: '1rem 2rem', fontSize: '1.1rem' }}>
+              <Link to="/onboard" className="btn btn-primary" style={{ padding: '0.9rem 2rem', fontSize: '1.1rem', width: 'auto', minWidth: '200px' }}>
                 Register Pharmacy
               </Link>
-              <Link to="/login" className="btn btn-outline" style={{ padding: '1rem 2rem', fontSize: '1.1rem' }}>
+              <Link to="/login" className="btn btn-outline" style={{ padding: '0.9rem 2rem', fontSize: '1.1rem', width: 'auto', minWidth: '200px' }}>
                 Staff Login
               </Link>
             </>

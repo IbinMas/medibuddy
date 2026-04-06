@@ -2,29 +2,43 @@ import { Outlet, NavLink } from 'react-router-dom';
 import Navbar from '../../components/Navbar';
 import { Users, Pill, Settings as SettingsIcon, LayoutDashboard, BarChart3, Clock, AlertTriangle, ClipboardList, MessageSquare } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 
 export default function DashboardLayout() {
   const { user } = useAuth();
+  const location = useLocation();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
   const sub = user?.pharmacy?.subscriptions?.[0];
   const daysRemaining = sub 
     ? Math.ceil((new Date(sub.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) 
     : 0;
+
+  useEffect(() => {
+    const handleToggle = () => setIsSidebarOpen(prev => !prev);
+    document.addEventListener('toggle-sidebar', handleToggle);
+    return () => document.removeEventListener('toggle-sidebar', handleToggle);
+  }, []);
+
+  // Close sidebar on route change (mobile)
+  useEffect(() => {
+    setIsSidebarOpen(false);
+  }, [location.pathname]);
+
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <div className="dashboard-container">
       <Navbar />
       
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+      <div className="dashboard-content-wrapper">
+        {/* Overlay for mobile */}
+        <div 
+          className={`dashboard-sidebar-overlay ${isSidebarOpen ? 'active' : ''}`} 
+          onClick={() => setIsSidebarOpen(false)}
+        />
+
         {/* Sidebar */}
-        <aside style={{ 
-          width: '250px', 
-          background: 'var(--surface)', 
-          borderRight: '1px solid var(--border)', 
-          padding: '2rem 1rem',
-          height: '100%',
-          overflowY: 'auto'
-        }}>
+        <aside className={`dashboard-sidebar ${isSidebarOpen ? 'active' : ''}`}>
           <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <NavLink to="/dashboard" end className="btn btn-outline" style={({ isActive }) => ({ justifyContent: 'flex-start', border: 'none', background: isActive ? 'var(--primary-light)' : 'transparent', color: isActive ? 'var(--primary)' : 'var(--muted)' })}>
               <LayoutDashboard size={18} /> Dashboard
@@ -53,24 +67,26 @@ export default function DashboardLayout() {
         </aside>
 
         {/* Main Content Area */}
-        <main style={{ flex: 1, padding: '2rem', background: 'var(--background)', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+        <main className="dashboard-main">
           {user?.pharmacy?.plan === 'BASIC' && daysRemaining > 0 && (
             <div style={{ 
               marginBottom: '2rem', 
               padding: '1rem 1.5rem', 
-              background: daysRemaining <= 7 ? 'var(--danger-light)' : 'var(--primary-light)', 
+              background: daysRemaining <= 7 ? 'rgba(239, 68, 68, 0.1)' : 'var(--primary-light)', 
               borderRadius: 'var(--radius-md)',
-              border: `1px solid ${daysRemaining <= 7 ? 'var(--danger)' : 'var(--primary)'}`,
+              border: `1px solid ${daysRemaining <= 7 ? 'var(--error)' : 'var(--primary)'}`,
               display: 'flex',
+              flexWrap: 'wrap',
               alignItems: 'center',
               justifyContent: 'space-between',
-              animation: 'fade-in 0.5s ease-out'
+              gap: '1rem',
+              animation: 'fadeIn 0.5s ease-out'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                {daysRemaining <= 7 ? <AlertTriangle size={20} color="var(--danger)" /> : <Clock size={20} color="var(--primary)" />}
-                <span style={{ fontWeight: 500, color: daysRemaining <= 7 ? 'var(--danger)' : 'var(--primary)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: '1 1 300px' }}>
+                {daysRemaining <= 7 ? <AlertTriangle size={20} color="var(--error)" /> : <Clock size={20} color="var(--primary)" />}
+                <span style={{ fontWeight: 500, color: daysRemaining <= 7 ? 'var(--error)' : 'var(--primary)' }}>
                   {daysRemaining} days remaining in your Free Trial. 
-                  <span style={{ fontWeight: 400, marginLeft: '0.5rem', opacity: 0.8 }}>Upgrade now to avoid service interruption.</span>
+                  <span className="hidden-mobile" style={{ fontWeight: 400, marginLeft: '0.5rem', opacity: 0.8 }}>Upgrade now to avoid service interruption.</span>
                 </span>
               </div>
               <Link to="/dashboard/settings" className="btn btn-primary" style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }}>

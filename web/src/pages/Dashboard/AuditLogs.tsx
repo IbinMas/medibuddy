@@ -63,74 +63,78 @@ export default function AuditLogs() {
         <p style={{ color: 'var(--muted)' }}>Track all system activities and record changes.</p>
       </header>
 
-      <div className="glass-panel" style={{ padding: 0 }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ textAlign: 'left', borderBottom: '1px solid var(--border)', background: 'var(--surface-hover)' }}>
-              <th style={{ padding: '1.25rem' }}>Timestamp</th>
-              <th style={{ padding: '1.25rem' }}>User</th>
-              <th style={{ padding: '1.25rem' }}>Action</th>
-              <th style={{ padding: '1.25rem' }}>Entity</th>
-              <th style={{ padding: '1.25rem' }}>Details</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td colSpan={5} style={{ padding: '3rem', textAlign: 'center', color: 'var(--muted)' }}>Loading logs...</td></tr>
-            ) : logs.length === 0 ? (
-              <tr><td colSpan={5} style={{ padding: '3rem', textAlign: 'center', color: 'var(--muted)' }}>No logs found.</td></tr>
-            ) : (
-              logs.map((log) => (
-                <tr key={log.id} style={{ borderBottom: '1px solid var(--border)', fontSize: '0.9rem' }}>
-                  <td style={{ padding: '1rem 1.25rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--muted)' }}>
-                      <Clock size={14} />
-                      {new Date(log.createdAt).toLocaleString()}
-                    </div>
-                  </td>
-                  <td style={{ padding: '1rem 1.25rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <User size={14} color="var(--primary)" />
-                      <div>
-                        <div>{log.user?.email || 'System'}</div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>{log.user?.role || 'N/A'}</div>
+      <div className="glass-panel" style={{ padding: 0, overflow: 'hidden' }}>
+        <div className="table-responsive">
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ textAlign: 'left', borderBottom: '1px solid var(--border)', background: 'var(--surface-hover)' }}>
+                <th style={{ padding: '1.25rem' }}>Timestamp</th>
+                <th style={{ padding: '1.25rem' }}>User</th>
+                <th style={{ padding: '1.25rem' }}>Action</th>
+                <th style={{ padding: '1.25rem' }}>Entity</th>
+                <th style={{ padding: '1.25rem' }}>Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr><td colSpan={5} style={{ padding: '3rem', textAlign: 'center', color: 'var(--muted)' }}>Loading logs...</td></tr>
+              ) : logs.length === 0 ? (
+                <tr><td colSpan={5} style={{ padding: '3rem', textAlign: 'center', color: 'var(--muted)' }}>No logs found.</td></tr>
+              ) : (
+                logs.map((log) => (
+                  <tr key={log.id} style={{ borderBottom: '1px solid var(--border)', fontSize: '0.9rem' }}>
+                    <td style={{ padding: '1rem 1.25rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--muted)' }}>
+                        <Clock size={14} />
+                        {new Date(log.createdAt).toLocaleString()}
                       </div>
-                    </div>
-                  </td>
-                  <td style={{ padding: '1rem 1.25rem' }}>
-                    <span style={{ 
-                      padding: '0.2rem 0.5rem', 
-                      borderRadius: 'var(--radius-sm)', 
-                      fontSize: '0.75rem', 
-                      fontWeight: 700,
-                      background: getActionColor(log.action) + '22',
-                      color: getActionColor(log.action)
-                    }}>
-                      {log.action}
-                    </span>
-                  </td>
-                  <td style={{ padding: '1rem 1.25rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <FileText size={14} color="var(--muted)" />
-                      {log.entity}
-                    </div>
-                  </td>
-                  <td style={{ padding: '1rem 1.25rem', color: 'var(--muted)', fontSize: '0.8rem' }}>
-                    {renderMetadata(log.metadata)}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+                    </td>
+                    <td style={{ padding: '1rem 1.25rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <User size={14} color="var(--primary)" />
+                        <div>
+                          <div>{log.user?.email || 'System'}</div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>{log.user?.role || 'N/A'}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td style={{ padding: '1rem 1.25rem' }}>
+                      <span style={{ 
+                        padding: '0.2rem 0.5rem', 
+                        borderRadius: 'var(--radius-sm)', 
+                        fontSize: '0.75rem', 
+                        fontWeight: 700,
+                        background: getActionColor(log.action) + '22',
+                        color: getActionColor(log.action)
+                      }}>
+                        {log.action}
+                      </span>
+                    </td>
+                    <td style={{ padding: '1rem 1.25rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <FileText size={14} color="var(--muted)" />
+                        {log.entity}
+                      </div>
+                    </td>
+                    <td style={{ padding: '1rem 1.25rem', color: 'var(--muted)', fontSize: '0.8rem' }}>
+                      {renderMetadata(log.metadata)}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
 
         {pagination.totalPages > 1 && (
-          <Pagination 
-            currentPage={page} 
-            totalPages={pagination.totalPages} 
-            totalItems={pagination.total} 
-            onPageChange={setPage} 
-          />
+          <div style={{ padding: '1rem' }}>
+            <Pagination 
+              currentPage={page} 
+              totalPages={pagination.totalPages} 
+              totalItems={pagination.total} 
+              onPageChange={setPage} 
+            />
+          </div>
         )}
       </div>
     </div>

@@ -74,7 +74,7 @@ export default function Onboard() {
           </div>
 
           <form onSubmit={handleRegister}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
               <div className="input-group">
                 <label htmlFor="name">Pharmacy Name</label>
                 <input id="name" type="text" className="input-control" placeholder="HealthCare Plus" value={formData.name} onChange={handleChange} required />

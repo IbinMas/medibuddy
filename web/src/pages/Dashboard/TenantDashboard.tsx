@@ -48,8 +48,8 @@ export default function TenantDashboard() {
   return (
     <div className="animate-fade-in">
       <header style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '2rem' }}>Welcome to {pharmacyName}</h1>
-        <p style={{ color: 'var(--muted)' }}>Here is what's happening in your pharmacy today.</p>
+        <h1 style={{ fontSize: '1.5rem', fontWeight: 800 }}>Welcome to {pharmacyName}</h1>
+        <p style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>Here is what's happening in your pharmacy today.</p>
       </header>
       
       {/* Stats Grid */}
@@ -95,52 +95,56 @@ export default function TenantDashboard() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '1.5rem', marginTop: '1.5rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', marginTop: '1.5rem' }}>
         {/* Operations Summary Bar Chart */}
-        <div className="glass-panel" style={{ height: '400px', padding: '2rem' }}>
+        <div className="glass-panel" style={{ minHeight: '350px', height: 'auto', padding: '2rem' }}>
           <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Activity size={20} color="var(--success)" /> Operations Summary
           </h3>
-          <ResponsiveContainer width="100%" height="80%">
-            <BarChart data={[
-              { name: 'Patients', value: metrics?.patients || 0 },
-              { name: 'Prescriptions', value: metrics?.prescriptions || 0 },
-              { name: 'Payments', value: metrics?.transactions || 0 }
-            ]}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
-              <XAxis dataKey="name" stroke="var(--muted)" fontSize={12} />
-              <YAxis stroke="var(--muted)" fontSize={12} />
-              <Tooltip cursor={{fill: 'var(--surface-hover)'}} />
-              <Bar dataKey="value" fill="var(--primary)" radius={[4, 4, 0, 0]} barSize={50} />
-            </BarChart>
-          </ResponsiveContainer>
+          <div style={{ width: '100%', height: '250px' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={[
+                { name: 'Patients', value: metrics?.patients || 0 },
+                { name: 'Prescriptions', value: metrics?.prescriptions || 0 },
+                { name: 'Payments', value: metrics?.transactions || 0 }
+              ]}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+                <XAxis dataKey="name" stroke="var(--muted)" fontSize={10} />
+                <YAxis stroke="var(--muted)" fontSize={10} />
+                <Tooltip cursor={{fill: 'var(--surface-hover)'}} />
+                <Bar dataKey="value" fill="var(--primary)" radius={[4, 4, 0, 0]} barSize={40} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
 
         {/* Patient Preference Pie Chart */}
-        <div className="glass-panel" style={{ height: '400px', padding: '2rem' }}>
+        <div className="glass-panel" style={{ minHeight: '350px', height: 'auto', padding: '2rem' }}>
           <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Activity size={20} color="var(--secondary)" /> Alert Preferences
           </h3>
-          <ResponsiveContainer width="100%" height="80%">
-            <PieChart>
-              <Pie
-                data={distribution}
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={80}
-                paddingAngle={5}
-                dataKey="count"
-                nameKey="medium"
-              >
-                {distribution.map((_: any, index: number) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip />
-              <Legend verticalAlign="bottom" height={36}/>
-            </PieChart>
-          </ResponsiveContainer>
+          <div style={{ width: '100%', height: '250px' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={distribution}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={50}
+                  outerRadius={70}
+                  paddingAngle={5}
+                  dataKey="count"
+                  nameKey="medium"
+                >
+                  {distribution.map((_: any, index: number) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend verticalAlign="bottom" height={36} iconSize={10} wrapperStyle={{ fontSize: '12px' }}/>
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
     </div>

@@ -199,3 +199,114 @@ h1, h2, h3, h4, h5, h6 {
 .min-h-screen {
   min-height: 100vh;
 }
+
+/* Responsive Utilities */
+.hidden-mobile {
+  display: block;
+}
+
+.visible-mobile {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .hidden-mobile {
+    display: none !important;
+  }
+  
+  .visible-mobile {
+    display: block !important;
+  }
+}
+
+/* Dashboard Layout Specifics */
+.dashboard-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.dashboard-content-wrapper {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.dashboard-sidebar {
+  width: 250px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 2rem 1rem;
+  height: 100%;
+  overflow-y: auto;
+  transition: transform 0.3s ease-in-out;
+}
+
+.dashboard-main {
+  flex: 1;
+  padding: 2rem;
+  background: var(--background);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 768px) {
+  .dashboard-sidebar {
+    position: fixed;
+    left: 0;
+    top: 65px; /* Navbar height approximate */
+    bottom: 0;
+    z-index: 40;
+    transform: translateX(-100%);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .dashboard-sidebar.active {
+    transform: translateX(0);
+  }
+
+  .dashboard-main {
+    padding: 1rem;
+  }
+  
+  .dashboard-sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    top: 65px;
+    background: rgba(0,0,0,0.3);
+    z-index: 35;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+  
+  .dashboard-sidebar-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+/* Responsive Table */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+table {
+  min-width: 600px; /* Ensure table doesn't get too squashed before scrolling */
+  width: 100%;
+  border-collapse: collapse;
+}
+
+@media (max-width: 768px) {
+  h1 { font-size: 1.5rem !important; }
+  h2 { font-size: 1.25rem !important; }
+  
+  .glass-panel {
+    padding: 1rem !important;
+  }
+}
