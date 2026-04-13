@@ -20,7 +20,7 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const resp = await AuthService.login({ email, password });
+      const resp = await AuthService.login({ email: email.toLowerCase(), password });
       loginState(resp.accessToken);
       navigate('/dashboard');
     } catch (err: any) {

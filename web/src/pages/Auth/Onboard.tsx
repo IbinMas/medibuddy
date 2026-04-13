@@ -23,7 +23,10 @@ export default function Onboard() {
     setLoading(true);
 
     try {
-      await AuthService.onboardPharmacy(formData);
+      await AuthService.onboardPharmacy({
+        ...formData,
+        adminEmail: formData.adminEmail.toLowerCase()
+      });
       setIsSuccess(true);
     } catch (err: any) {
       setError(err?.response?.data?.message || 'Failed to onboard pharmacy. Try again.');

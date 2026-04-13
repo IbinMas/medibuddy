@@ -321,8 +321,9 @@ export class AuthService {
       throw new BadRequestException('Invite has expired');
     }
 
+    const emailNormalized = invite.email.toLowerCase();
     const existingUser = await this.prisma.user.findUnique({
-      where: { email: invite.email },
+      where: { email: emailNormalized },
     });
     if (existingUser) {
       throw new ConflictException('Email already registered');
@@ -331,7 +332,7 @@ export class AuthService {
     const user = await this.prisma.$transaction(async (tx) => {
       const created = await tx.user.create({
         data: {
-          email: invite.email,
+          email: emailNormalized,
           password: await bcrypt.hash(dto.password, 10),
           role: invite.role,
           pharmacyId: invite.pharmacyId,
@@ -369,8 +370,9 @@ export class AuthService {
   }
 
   async requestEmailVerification(email: string) {
+    const emailNormalized = email.toLowerCase();
     const user = await this.prisma.user.findUnique({
-      where: { email },
+      where: { email: emailNormalized },
       select: { id: true, email: true, pharmacyId: true, emailVerifiedAt: true },
     });
 
@@ -456,8 +458,9 @@ export class AuthService {
   }
 
   async requestPasswordReset(email: string) {
+    const emailNormalized = email.toLowerCase();
     const user = await this.prisma.user.findUnique({
-      where: { email },
+      where: { email: emailNormalized },
       select: { id: true, email: true, pharmacyId: true },
     });
 

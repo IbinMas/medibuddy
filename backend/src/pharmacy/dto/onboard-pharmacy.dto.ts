@@ -1,4 +1,5 @@
 import { IsEmail, IsEnum, IsString, MinLength } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { Plan } from '@prisma/client';
 
 export class OnboardPharmacyDto {
@@ -12,6 +13,7 @@ export class OnboardPharmacyDto {
   plan!: Plan;
 
   @IsEmail()
+  @Transform(({ value }) => value?.toLowerCase())
   adminEmail!: string;
 
   @IsString()
