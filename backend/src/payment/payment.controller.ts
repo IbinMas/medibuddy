@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, ForbiddenException, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { TenantGuard } from '../common/guards/tenant.guard';
 import { CreatePaymentDto } from './dto/create-payment.dto';
@@ -17,8 +17,16 @@ export class PaymentController {
   }
 
   @Post(':reference/confirm')
-  confirm(@Param('reference') reference: string, @Body('status') status: TransactionStatus) {
-    return this.paymentService.confirm(reference, status);
+  confirm(
+    @Req() req: AuthenticatedRequest,
+    @Param('reference') reference: string,
+    @Body('status') status: TransactionStatus,
+  ) {
+    if (!req.user?.pharmacyId) {
+      throw new ForbiddenException('Tenant context is required');
+    }
+
+    return this.paymentService.confirm(req.user.pharmacyId, reference, status);
   }
 
   @Get()

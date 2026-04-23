@@ -1,18 +1,27 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import Navbar from '../../components/Navbar';
 import { AuthService } from '../../services/auth.service';
 import { useAuth } from '../../hooks/useAuth';
 import { LogIn } from 'lucide-react';
 
 export default function Login() {
-  const [email, setEmail] = useState('');
+  const [searchParams] = useSearchParams();
+  const [email, setEmail] = useState(searchParams.get('email') || '');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   
   const { loginState } = useAuth();
   const navigate = useNavigate();
+
+  // Update email if query param changes (optional but good for consistency)
+  useEffect(() => {
+    const emailParam = searchParams.get('email');
+    if (emailParam) {
+      setEmail(emailParam);
+    }
+  }, [searchParams]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,6 +94,9 @@ export default function Login() {
 
           <p style={{ textAlign: 'center', marginTop: '2rem', fontSize: '0.9rem', color: 'var(--muted)' }}>
             Don't have a pharmacy account? <Link to="/onboard">Get Started</Link>
+          </p>
+          <p style={{ textAlign: 'center', marginTop: '0.75rem', fontSize: '0.9rem', color: 'var(--muted)' }}>
+            Forgot your password? <Link to="/reset-password">Reset it here</Link>
           </p>
         </div>
       </main>

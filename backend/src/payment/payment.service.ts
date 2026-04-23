@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, ForbiddenException } from '@nestjs/common';
 import { TransactionStatus, SubscriptionStatus } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
@@ -39,12 +39,12 @@ export class PaymentService {
     };
   }
 
-  async confirm(reference: string, status: TransactionStatus) {
-    const transaction = await this.prisma.transaction.findUnique({
-      where: { reference },
+  async confirm(pharmacyId: string, reference: string, status: TransactionStatus) {
+    const transaction = await this.prisma.transaction.findFirst({
+      where: { reference, pharmacyId },
     });
     if (!transaction) {
-      throw new NotFoundException('Transaction not found');
+      throw new ForbiddenException('Transaction not found for this tenant');
     }
 
     const updated = await this.prisma.transaction.update({

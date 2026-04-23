@@ -32,7 +32,7 @@ export class PharmacyService {
               email: dto.adminEmail,
               password: await bcrypt.hash(dto.password, 10),
               role: Role.ADMIN,
-              emailVerifiedAt: null,
+              emailVerifiedAt: new Date(),
             },
           },
           subscriptions: {
@@ -60,15 +60,6 @@ export class PharmacyService {
       });
 
       const adminUser = pharmacy.users[0];
-      const verificationToken = await tx.authToken.create({
-        data: {
-          userId: adminUser.id,
-          email: adminUser.email,
-          type: AuthTokenType.EMAIL_VERIFICATION,
-          code: randomUUID(),
-          expiresAt: addHours(new Date(), 24),
-        },
-      });
 
       await tx.auditLog.create({
         data: {
@@ -81,23 +72,10 @@ export class PharmacyService {
         },
       });
 
-      return { pharmacy, verificationToken, adminUser };
+      return { pharmacy, adminUser };
     });
 
-    const verificationUrl = `${buildAppBaseUrl()}/verify-email?code=${encodeURIComponent(
-      result.verificationToken.code,
-    )}`;
-    const verificationEmailResult = await this.mailerService.sendVerificationEmail({
-      to: result.adminUser.email,
-      pharmacyName: result.pharmacy.name,
-      verifyUrl: verificationUrl,
-    });
-
-    return {
-      ...result.pharmacy,
-      verificationUrl,
-      verificationEmailResult,
-    };
+    return result.pharmacy;
   }
 
   findOne(pharmacyId: string) {

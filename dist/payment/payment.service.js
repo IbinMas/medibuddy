@@ -45,12 +45,12 @@ let PaymentService = class PaymentService {
             prompt: 'MoMo payment prompt should be triggered by the provider adapter.',
         };
     }
-    async confirm(reference, status) {
-        const transaction = await this.prisma.transaction.findUnique({
-            where: { reference },
+    async confirm(pharmacyId, reference, status) {
+        const transaction = await this.prisma.transaction.findFirst({
+            where: { reference, pharmacyId },
         });
         if (!transaction) {
-            throw new common_1.NotFoundException('Transaction not found');
+            throw new common_1.ForbiddenException('Transaction not found for this tenant');
         }
         const updated = await this.prisma.transaction.update({
             where: { reference },

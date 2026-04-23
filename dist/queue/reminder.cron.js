@@ -88,7 +88,13 @@ let ReminderCronService = ReminderCronService_1 = class ReminderCronService {
                     await this.whatsappService.sendGroupedReminderMessage(patient, pharmacy, prescriptions, currentHourString);
                 }
                 else if (patient.notificationMedium === 'SMS') {
-                    await this.smsService.sendGroupedReminderMessage(patient, pharmacy, prescriptions, currentHourString);
+                    const smsResponse = await this.smsService.sendGroupedReminderMessage(patient, pharmacy, prescriptions, currentHourString);
+                    if (smsResponse.success && smsResponse.messageId) {
+                        await this.prisma.prescription.updateMany({
+                            where: { id: { in: prescriptions.map(p => p.id) } },
+                            data: { messageId: String(smsResponse.messageId) }
+                        });
+                    }
                 }
             }
         }

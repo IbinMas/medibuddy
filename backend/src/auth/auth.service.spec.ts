@@ -3,7 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { PrismaService } from '../database/prisma.service';
 import { MailerService } from '../common/mailer/mailer.service';
-import { AuthTokenType, InviteStatus, Role } from '@prisma/client';
+import { InviteStatus, Role } from '@prisma/client';
 
 describe('AuthService lifecycle', () => {
   const prisma = {
@@ -41,7 +41,6 @@ describe('AuthService lifecycle', () => {
 
   const mailerService = {
     sendInviteEmail: jest.fn().mockResolvedValue({ sent: true }),
-    sendVerificationEmail: jest.fn().mockResolvedValue({ sent: true }),
     sendPasswordResetEmail: jest.fn().mockResolvedValue({ sent: true }),
   } as unknown as MailerService;
 
@@ -128,11 +127,15 @@ describe('AuthService lifecycle', () => {
     expect(revoked.status).toBe(InviteStatus.CANCELLED);
   });
 
-  it('creates verification and reset tokens', async () => {
+  it('allows login immediately after signup and creates reset tokens', async () => {
+    const hashedPassword = await bcrypt.hash('Password123', 10);
+
     (prisma.user.findUnique as jest.Mock)
       .mockResolvedValueOnce({
         id: 'user-1',
         email: 'admin@kwasi.test',
+        password: hashedPassword,
+        role: Role.ADMIN,
         pharmacyId: 'pharmacy-1',
         emailVerifiedAt: null,
       })
@@ -142,43 +145,20 @@ describe('AuthService lifecycle', () => {
         pharmacyId: 'pharmacy-1',
       });
 
-    (prisma.authToken.create as jest.Mock).mockResolvedValueOnce({
-      code: 'verify-code',
-      type: AuthTokenType.EMAIL_VERIFICATION,
-    });
-    (prisma.authToken.create as jest.Mock).mockResolvedValueOnce({
+    (prisma.pharmacy.findUnique as jest.Mock).mockResolvedValue({ name: 'Kwasi Pharmacy' });
+    (prisma.authToken.create as jest.Mock).mockResolvedValue({
       code: 'reset-code',
-      type: AuthTokenType.PASSWORD_RESET,
     });
-    (prisma.authToken.findUnique as jest.Mock)
-      .mockResolvedValueOnce({
-        userId: 'user-1',
-        type: AuthTokenType.EMAIL_VERIFICATION,
-        usedAt: null,
-        expiresAt: new Date(Date.now() + 1000),
-      })
-      .mockResolvedValueOnce({
-        userId: 'user-1',
-        type: AuthTokenType.PASSWORD_RESET,
-        usedAt: null,
-        expiresAt: new Date(Date.now() + 1000),
-      });
-    (prisma.user.update as jest.Mock).mockResolvedValue({
-      id: 'user-1',
+
+    const loginResult = await service.login({
       email: 'admin@kwasi.test',
-      role: Role.ADMIN,
-      pharmacyId: 'pharmacy-1',
-      emailVerifiedAt: new Date(),
+      password: 'Password123',
     });
-
-    await service.requestEmailVerification('admin@kwasi.test');
-    await service.verifyEmail('verify-code');
     await service.requestPasswordReset('admin@kwasi.test');
-    await service.resetPassword('reset-code', 'NewPassword123');
 
-    expect(mailerService.sendVerificationEmail).toHaveBeenCalled();
-    expect(mailerService.sendPasswordResetEmail).toHaveBeenCalled();
-    expect((prisma.authToken.update as jest.Mock).mock.calls).toHaveLength(2);
-    expect(bcrypt.hash).toBeDefined();
+    expect(loginResult.accessToken).toBe('signed-token');
+    expect(mailerService.sendPasswordResetEmail).toHaveBeenCalledWith(
+      expect.objectContaining({ pharmacyName: 'Kwasi Pharmacy' }),
+    );
   });
 });

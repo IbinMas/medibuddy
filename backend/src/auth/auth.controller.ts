@@ -3,8 +3,6 @@ import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { CreateInviteDto } from './dto/create-invite.dto';
 import { AcceptInviteDto } from './dto/accept-invite.dto';
-import { RequestEmailVerificationDto } from './dto/request-email-verification.dto';
-import { VerifyEmailDto } from './dto/verify-email.dto';
 import { RequestPasswordResetDto } from './dto/request-password-reset.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
@@ -34,16 +32,6 @@ export class AuthController {
   @Patch('profile')
   updateProfile(@Req() req: AuthenticatedRequest, @Body() dto: UpdateProfileDto) {
     return this.authService.updateProfile(req.user.id, dto);
-  }
-
-  @Post('request-email-verification')
-  requestEmailVerification(@Body() dto: RequestEmailVerificationDto) {
-    return this.authService.requestEmailVerification(dto.email);
-  }
-
-  @Post('verify-email')
-  verifyEmail(@Body() dto: VerifyEmailDto) {
-    return this.authService.verifyEmail(dto.code);
   }
 
   @Post('request-password-reset')

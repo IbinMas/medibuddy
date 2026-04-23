@@ -24,6 +24,17 @@ export class PrescriptionService {
   }
 
   async bulkCreate(pharmacyId: string, userId: string | undefined, dtos: CreatePrescriptionDto[]) {
+    for (const dto of dtos) {
+      const patient = await this.prisma.patient.findFirst({
+        where: { id: dto.patientId, pharmacyId, deletedAt: null },
+        select: { id: true },
+      });
+
+      if (!patient) {
+        throw new NotFoundException('Patient not found');
+      }
+    }
+
     const results = await this.prisma.$transaction(async (tx) => {
       const creations = [];
       for (const dto of dtos) {

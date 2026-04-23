@@ -15,13 +15,16 @@ const common_1 = require("@nestjs/common");
 const bullmq_1 = require("bullmq");
 const prisma_service_1 = require("../database/prisma.service");
 const whatsapp_service_1 = require("../common/whatsapp/whatsapp.service");
+const sms_service_1 = require("../common/sms/sms.service");
 let ReminderProcessor = ReminderProcessor_1 = class ReminderProcessor {
     prisma;
     whatsappService;
+    smsService;
     logger = new common_1.Logger(ReminderProcessor_1.name);
-    constructor(prisma, whatsappService) {
+    constructor(prisma, whatsappService, smsService) {
         this.prisma = prisma;
         this.whatsappService = whatsappService;
+        this.smsService = smsService;
     }
     async onModuleInit() {
         const host = process.env.REDIS_HOST || 'localhost';
@@ -57,6 +60,15 @@ let ReminderProcessor = ReminderProcessor_1 = class ReminderProcessor {
         if (data.medium === 'WHATSAPP') {
             await this.whatsappService.sendPrescriptionMessage(patient, pharmacy, prescription);
         }
+        else if (data.medium === 'SMS') {
+            const smsResponse = await this.smsService.sendPrescriptionMessage(patient, pharmacy, prescription);
+            if (smsResponse.success && smsResponse.messageId) {
+                await this.prisma.prescription.update({
+                    where: { id: prescription.id },
+                    data: { messageId: String(smsResponse.messageId) }
+                });
+            }
+        }
         else {
             this.logger.warn(`Medium [${data.medium}] not yet implemented in worker.`);
         }
@@ -79,6 +91,7 @@ exports.ReminderProcessor = ReminderProcessor;
 exports.ReminderProcessor = ReminderProcessor = ReminderProcessor_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
-        whatsapp_service_1.WhatsappService])
+        whatsapp_service_1.WhatsappService,
+        sms_service_1.SmsService])
 ], ReminderProcessor);
 //# sourceMappingURL=reminder-processor.js.map

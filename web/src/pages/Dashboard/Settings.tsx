@@ -35,6 +35,10 @@ export default function Settings() {
       setUser(me);
       setProfileForm({ ...profileForm, email: me.email });
       setPharmacyForm({ name: me.pharmacy.name, phone: me.pharmacy.phone || '' });
+      const activeSubscription = !!me.pharmacy?.subscriptions?.[0] && new Date(me.pharmacy.subscriptions[0].expiresAt).getTime() > Date.now();
+      if (!activeSubscription) {
+        setActiveTab('subscription');
+      }
       
       if (me.role === 'ADMIN') {
         const invs = await AuthService.listInvites();

@@ -17,7 +17,7 @@ export class WhatsappService {
   async sendPrescriptionMessage(patient: any, pharmacy: any, prescription: any) {
     const firstName = decrypt(patient.firstNameEncrypted).trim();
     const lastName = decrypt(patient.lastNameEncrypted).trim();
-    const phone = +233245724489|| this.formatPhoneNumber(decrypt(patient.phoneEncrypted));
+    const phone = this.formatPhoneNumber(decrypt(patient.phoneEncrypted));
     const medication = decrypt(prescription.medicationEncrypted);
 
     const message = [

@@ -27,8 +27,11 @@ let PaymentController = class PaymentController {
     initiate(req, dto) {
         return this.paymentService.initiate(req.pharmacyId ?? req.user.pharmacyId, dto);
     }
-    confirm(reference, status) {
-        return this.paymentService.confirm(reference, status);
+    confirm(req, reference, status) {
+        if (!req.user?.pharmacyId) {
+            throw new common_1.ForbiddenException('Tenant context is required');
+        }
+        return this.paymentService.confirm(req.user.pharmacyId, reference, status);
     }
     list(req) {
         return this.paymentService.listTransactions(req.pharmacyId ?? req.user.pharmacyId);
@@ -45,10 +48,11 @@ __decorate([
 ], PaymentController.prototype, "initiate", null);
 __decorate([
     (0, common_1.Post)(':reference/confirm'),
-    __param(0, (0, common_1.Param)('reference')),
-    __param(1, (0, common_1.Body)('status')),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('reference')),
+    __param(2, (0, common_1.Body)('status')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [Object, String, String]),
     __metadata("design:returntype", void 0)
 ], PaymentController.prototype, "confirm", null);
 __decorate([

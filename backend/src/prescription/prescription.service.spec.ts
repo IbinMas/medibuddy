@@ -2,6 +2,8 @@ import { PrescriptionService } from './prescription.service';
 import { PrismaService } from '../database/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { ReminderQueueService } from '../queue/reminder-queue.service';
+import { WhatsappService } from '../common/whatsapp/whatsapp.service';
+import { SmsService } from '../common/sms/sms.service';
 
 describe('PrescriptionService tenant isolation', () => {
   const prisma = {
@@ -22,7 +24,21 @@ describe('PrescriptionService tenant isolation', () => {
     scheduleReminder: jest.fn(),
   } as unknown as ReminderQueueService;
 
-  const service = new PrescriptionService(prisma, auditService, reminderQueue);
+  const whatsappService = {
+    sendGroupedPrescriptionMessage: jest.fn(),
+  } as unknown as WhatsappService;
+
+  const smsService = {
+    sendGroupedPrescriptionMessage: jest.fn(),
+  } as unknown as SmsService;
+
+  const service = new PrescriptionService(
+    prisma,
+    auditService,
+    reminderQueue,
+    whatsappService,
+    smsService,
+  );
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -43,7 +59,7 @@ describe('PrescriptionService tenant isolation', () => {
     (prisma.patient.findFirst as jest.Mock).mockResolvedValue(null);
 
     await expect(
-      service.create('pharmacy-1', {
+      service.create('pharmacy-1', 'user-1', {
         patientId: 'patient-1',
         medication: 'Amoxicillin',
         dosage: '500mg',
@@ -53,7 +69,7 @@ describe('PrescriptionService tenant isolation', () => {
       }),
     ).rejects.toThrow('Patient not found');
 
-    expect((prisma.patient.findFirst as jest.Mock).mock.calls[0][0]).toEqual({
+    expect((prisma.patient.findFirst as jest.Mock).mock.calls[0][0]).toMatchObject({
       where: { id: 'patient-1', pharmacyId: 'pharmacy-1', deletedAt: null },
     });
   });

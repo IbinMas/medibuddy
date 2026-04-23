@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../../components/Navbar';
 import { AuthService } from '../../services/auth.service';
 import { Building2 } from 'lucide-react';
 
 export default function Onboard() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -15,7 +16,6 @@ export default function Onboard() {
   
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,40 +23,18 @@ export default function Onboard() {
     setLoading(true);
 
     try {
+      const email = formData.adminEmail.toLowerCase();
       await AuthService.onboardPharmacy({
         ...formData,
-        adminEmail: formData.adminEmail.toLowerCase()
+        adminEmail: email
       });
-      setIsSuccess(true);
+      navigate(`/login?email=${encodeURIComponent(email)}`);
     } catch (err: any) {
       setError(err?.response?.data?.message || 'Failed to onboard pharmacy. Try again.');
     } finally {
       setLoading(false);
     }
   };
-
-  if (isSuccess) {
-    return (
-      <div className="min-h-screen" style={{ display: 'flex', flexDirection: 'column' }}>
-        <Navbar />
-        <main className="flex-center animate-fade-in" style={{ flex: 1, padding: '2rem' }}>
-          <div className="glass-panel" style={{ width: '100%', maxWidth: '500px', textAlign: 'center', padding: '3rem' }}>
-            <div style={{ display: 'inline-flex', padding: '1.5rem', background: 'var(--success-light)', borderRadius: 'var(--radius-full)', marginBottom: '1.5rem', color: 'var(--success)' }}>
-              <Building2 size={42} />
-            </div>
-            <h2 style={{ marginBottom: '1rem' }}>Sucsess! Check Your Email</h2>
-            <p style={{ color: 'var(--muted)', marginBottom: '2rem', lineHeight: '1.6' }}>
-              We've sent a verification link to <strong>{formData.adminEmail}</strong>. <br />
-              Please verify your email to activate your workspace and log in.
-            </p>
-            <Link to="/login" className="btn btn-primary" style={{ display: 'inline-block', width: '100%' }}>
-              Back to Login
-            </Link>
-          </div>
-        </main>
-      </div>
-    );
-  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });

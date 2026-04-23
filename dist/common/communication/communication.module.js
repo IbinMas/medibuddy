@@ -6,20 +6,19 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.QueueModule = void 0;
+exports.CommunicationModule = void 0;
 const common_1 = require("@nestjs/common");
-const reminder_queue_service_1 = require("./reminder-queue.service");
-const reminder_processor_1 = require("./reminder-processor");
-const reminder_cron_1 = require("./reminder.cron");
-const sms_status_cron_1 = require("./sms-status.cron");
-let QueueModule = class QueueModule {
+const communication_service_1 = require("./communication.service");
+const communication_controller_1 = require("./communication.controller");
+let CommunicationModule = class CommunicationModule {
 };
-exports.QueueModule = QueueModule;
-exports.QueueModule = QueueModule = __decorate([
+exports.CommunicationModule = CommunicationModule;
+exports.CommunicationModule = CommunicationModule = __decorate([
     (0, common_1.Global)(),
     (0, common_1.Module)({
-        providers: [reminder_queue_service_1.ReminderQueueService, reminder_processor_1.ReminderProcessor, reminder_cron_1.ReminderCronService, sms_status_cron_1.SmsStatusCronService],
-        exports: [reminder_queue_service_1.ReminderQueueService],
+        providers: [communication_service_1.CommunicationService],
+        controllers: [communication_controller_1.CommunicationController],
+        exports: [communication_service_1.CommunicationService],
     })
-], QueueModule);
-//# sourceMappingURL=queue.module.js.map
+], CommunicationModule);
+//# sourceMappingURL=communication.module.js.map

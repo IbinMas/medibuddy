@@ -18,8 +18,6 @@ const auth_service_1 = require("./auth.service");
 const login_dto_1 = require("./dto/login.dto");
 const create_invite_dto_1 = require("./dto/create-invite.dto");
 const accept_invite_dto_1 = require("./dto/accept-invite.dto");
-const request_email_verification_dto_1 = require("./dto/request-email-verification.dto");
-const verify_email_dto_1 = require("./dto/verify-email.dto");
 const request_password_reset_dto_1 = require("./dto/request-password-reset.dto");
 const reset_password_dto_1 = require("./dto/reset-password.dto");
 const update_profile_dto_1 = require("./dto/update-profile.dto");
@@ -41,12 +39,6 @@ let AuthController = class AuthController {
     }
     updateProfile(req, dto) {
         return this.authService.updateProfile(req.user.id, dto);
-    }
-    requestEmailVerification(dto) {
-        return this.authService.requestEmailVerification(dto.email);
-    }
-    verifyEmail(dto) {
-        return this.authService.verifyEmail(dto.code);
     }
     requestPasswordReset(dto) {
         return this.authService.requestPasswordReset(dto.email);
@@ -95,20 +87,6 @@ __decorate([
     __metadata("design:paramtypes", [Object, update_profile_dto_1.UpdateProfileDto]),
     __metadata("design:returntype", void 0)
 ], AuthController.prototype, "updateProfile", null);
-__decorate([
-    (0, common_1.Post)('request-email-verification'),
-    __param(0, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [request_email_verification_dto_1.RequestEmailVerificationDto]),
-    __metadata("design:returntype", void 0)
-], AuthController.prototype, "requestEmailVerification", null);
-__decorate([
-    (0, common_1.Post)('verify-email'),
-    __param(0, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [verify_email_dto_1.VerifyEmailDto]),
-    __metadata("design:returntype", void 0)
-], AuthController.prototype, "verifyEmail", null);
 __decorate([
     (0, common_1.Post)('request-password-reset'),
     __param(0, (0, common_1.Body)()),

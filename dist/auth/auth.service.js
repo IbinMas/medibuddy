@@ -68,14 +68,10 @@ let AuthService = class AuthService {
                 password: true,
                 role: true,
                 pharmacyId: true,
-                emailVerifiedAt: true,
             },
         });
         if (!user || !(await bcrypt.compare(dto.password, user.password))) {
             throw new common_1.UnauthorizedException('Invalid credentials');
-        }
-        if (!user.emailVerifiedAt) {
-            throw new common_1.ForbiddenException('Email not verified');
         }
         return {
             user: { id: user.id, email: user.email, role: user.role, pharmacyId: user.pharmacyId },
@@ -90,7 +86,6 @@ let AuthService = class AuthService {
                 email: true,
                 role: true,
                 pharmacyId: true,
-                emailVerifiedAt: true,
                 pharmacy: {
                     select: {
                         id: true,
@@ -129,7 +124,6 @@ let AuthService = class AuthService {
             if (existing)
                 throw new common_1.ConflictException('Email already in use');
             data.email = dto.email;
-            data.emailVerifiedAt = null; // Require re-verification
         }
         if (dto.password) {
             if (!dto.currentPassword) {
@@ -145,9 +139,6 @@ let AuthService = class AuthService {
             data,
             select: { id: true, email: true, role: true, pharmacyId: true },
         });
-        if (data.email) {
-            await this.requestEmailVerification(data.email);
-        }
         return updated;
     }
     async createInvite(pharmacyId, createdByUserId, dto) {
@@ -310,8 +301,9 @@ let AuthService = class AuthService {
             });
             throw new common_1.BadRequestException('Invite has expired');
         }
+        const emailNormalized = invite.email.toLowerCase();
         const existingUser = await this.prisma.user.findUnique({
-            where: { email: invite.email },
+            where: { email: emailNormalized },
         });
         if (existingUser) {
             throw new common_1.ConflictException('Email already registered');
@@ -319,7 +311,7 @@ let AuthService = class AuthService {
         const user = await this.prisma.$transaction(async (tx) => {
             const created = await tx.user.create({
                 data: {
-                    email: invite.email,
+                    email: emailNormalized,
                     password: await bcrypt.hash(dto.password, 10),
                     role: invite.role,
                     pharmacyId: invite.pharmacyId,
@@ -351,80 +343,10 @@ let AuthService = class AuthService {
             accessToken: this.jwtService.sign({ sub: user.id, pharmacyId: user.pharmacyId }),
         };
     }
-    async requestEmailVerification(email) {
-        const user = await this.prisma.user.findUnique({
-            where: { email },
-            select: { id: true, email: true, pharmacyId: true, emailVerifiedAt: true },
-        });
-        if (!user) {
-            return { message: 'If the account exists, a verification email has been sent.' };
-        }
-        if (user.emailVerifiedAt) {
-            return { message: 'Email is already verified.' };
-        }
-        const token = await this.prisma.$transaction(async (tx) => {
-            await tx.authToken.deleteMany({
-                where: {
-                    userId: user.id,
-                    type: client_1.AuthTokenType.EMAIL_VERIFICATION,
-                    usedAt: null,
-                },
-            });
-            const created = await tx.authToken.create({
-                data: {
-                    userId: user.id,
-                    email: user.email,
-                    type: client_1.AuthTokenType.EMAIL_VERIFICATION,
-                    code: (0, crypto_1.randomUUID)(),
-                    expiresAt: addHours(new Date(), 24),
-                },
-            });
-            return created;
-        });
-        const verifyUrl = this.buildEmailVerificationUrl(token.code);
-        const emailResult = await this.mailerService.sendVerificationEmail({
-            to: user.email,
-            pharmacyName: await this.getPharmacyName(user.pharmacyId),
-            verifyUrl,
-        });
-        return {
-            message: 'If the account exists, a verification email has been sent.',
-            emailResult,
-        };
-    }
-    async verifyEmail(code) {
-        const token = await this.prisma.authToken.findUnique({
-            where: { code },
-        });
-        if (!token || token.type !== client_1.AuthTokenType.EMAIL_VERIFICATION) {
-            throw new common_1.BadRequestException('Verification token not found');
-        }
-        if (token.usedAt) {
-            throw new common_1.BadRequestException('Verification token already used');
-        }
-        if (token.expiresAt.getTime() < Date.now()) {
-            throw new common_1.BadRequestException('Verification token expired');
-        }
-        const user = await this.prisma.$transaction(async (tx) => {
-            const updatedUser = await tx.user.update({
-                where: { id: token.userId },
-                data: { emailVerifiedAt: new Date() },
-                select: { id: true, email: true, role: true, pharmacyId: true, emailVerifiedAt: true },
-            });
-            await tx.authToken.update({
-                where: { code },
-                data: { usedAt: new Date() },
-            });
-            return updatedUser;
-        });
-        return {
-            message: 'Email verified successfully.',
-            user,
-        };
-    }
     async requestPasswordReset(email) {
+        const emailNormalized = email.toLowerCase();
         const user = await this.prisma.user.findUnique({
-            where: { email },
+            where: { email: emailNormalized },
             select: { id: true, email: true, pharmacyId: true },
         });
         if (!user) {
@@ -487,9 +409,6 @@ let AuthService = class AuthService {
     }
     buildInviteAcceptUrl(code) {
         return `${buildAppBaseUrl()}/accept-invite?code=${encodeURIComponent(code)}`;
-    }
-    buildEmailVerificationUrl(code) {
-        return `${buildAppBaseUrl()}/verify-email?code=${encodeURIComponent(code)}`;
     }
     buildPasswordResetUrl(code) {
         return `${buildAppBaseUrl()}/reset-password?code=${encodeURIComponent(code)}`;

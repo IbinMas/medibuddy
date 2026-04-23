@@ -2,7 +2,6 @@ import {
   ConflictException,
   Injectable,
   BadRequestException,
-  ForbiddenException,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -34,16 +33,11 @@ export class AuthService {
         password: true,
         role: true,
         pharmacyId: true,
-        emailVerifiedAt: true,
       },
     });
 
     if (!user || !(await bcrypt.compare(dto.password, user.password))) {
       throw new UnauthorizedException('Invalid credentials');
-    }
-
-    if (!user.emailVerifiedAt) {
-      throw new ForbiddenException('Email not verified');
     }
 
     return {
@@ -60,7 +54,6 @@ export class AuthService {
         email: true,
         role: true,
         pharmacyId: true,
-        emailVerifiedAt: true,
         pharmacy: {
           select: {
             id: true,
@@ -104,7 +97,6 @@ export class AuthService {
       const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
       if (existing) throw new ConflictException('Email already in use');
       data.email = dto.email;
-      data.emailVerifiedAt = null; // Require re-verification
     }
 
     if (dto.password) {
@@ -121,10 +113,6 @@ export class AuthService {
       data,
       select: { id: true, email: true, role: true, pharmacyId: true },
     });
-
-    if (data.email) {
-      await this.requestEmailVerification(data.email);
-    }
 
     return updated;
   }
@@ -369,94 +357,6 @@ export class AuthService {
     };
   }
 
-  async requestEmailVerification(email: string) {
-    const emailNormalized = email.toLowerCase();
-    const user = await this.prisma.user.findUnique({
-      where: { email: emailNormalized },
-      select: { id: true, email: true, pharmacyId: true, emailVerifiedAt: true },
-    });
-
-    if (!user) {
-      return { message: 'If the account exists, a verification email has been sent.' };
-    }
-
-    if (user.emailVerifiedAt) {
-      return { message: 'Email is already verified.' };
-    }
-
-    const token = await this.prisma.$transaction(async (tx) => {
-      await tx.authToken.deleteMany({
-        where: {
-          userId: user.id,
-          type: AuthTokenType.EMAIL_VERIFICATION,
-          usedAt: null,
-        },
-      });
-
-      const created = await tx.authToken.create({
-        data: {
-          userId: user.id,
-          email: user.email,
-          type: AuthTokenType.EMAIL_VERIFICATION,
-          code: randomUUID(),
-          expiresAt: addHours(new Date(), 24),
-        },
-      });
-
-      return created;
-    });
-
-    const verifyUrl = this.buildEmailVerificationUrl(token.code);
-    const emailResult = await this.mailerService.sendVerificationEmail({
-      to: user.email,
-      pharmacyName: await this.getPharmacyName(user.pharmacyId),
-      verifyUrl,
-    });
-
-    return {
-      message: 'If the account exists, a verification email has been sent.',
-      emailResult,
-    };
-  }
-
-  async verifyEmail(code: string) {
-    const token = await this.prisma.authToken.findUnique({
-      where: { code },
-    });
-
-    if (!token || token.type !== AuthTokenType.EMAIL_VERIFICATION) {
-      throw new BadRequestException('Verification token not found');
-    }
-
-    if (token.usedAt) {
-      throw new BadRequestException('Verification token already used');
-    }
-
-    if (token.expiresAt.getTime() < Date.now()) {
-      throw new BadRequestException('Verification token expired');
-    }
-
-    const user = await this.prisma.$transaction(async (tx) => {
-      const updatedUser = await tx.user.update({
-        where: { id: token.userId },
-        data: { emailVerifiedAt: new Date() },
-        select: { id: true, email: true, role: true, pharmacyId: true, emailVerifiedAt: true },
-      });
-
-      await tx.authToken.update({
-        where: { code },
-        data: { usedAt: new Date() },
-      });
-
-      return updatedUser;
-    });
-
-    return {
-      message: 'Email verified successfully.',
-      user,
-    };
-  }
-
   async requestPasswordReset(email: string) {
     const emailNormalized = email.toLowerCase();
     const user = await this.prisma.user.findUnique({
@@ -536,10 +436,6 @@ export class AuthService {
 
   private buildInviteAcceptUrl(code: string) {
     return `${buildAppBaseUrl()}/accept-invite?code=${encodeURIComponent(code)}`;
-  }
-
-  private buildEmailVerificationUrl(code: string) {
-    return `${buildAppBaseUrl()}/verify-email?code=${encodeURIComponent(code)}`;
   }
 
   private buildPasswordResetUrl(code: string) {

@@ -11,12 +11,14 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RequestPasswordResetDto = void 0;
 const class_validator_1 = require("class-validator");
+const class_transformer_1 = require("class-transformer");
 class RequestPasswordResetDto {
     email;
 }
 exports.RequestPasswordResetDto = RequestPasswordResetDto;
 __decorate([
     (0, class_validator_1.IsEmail)(),
+    (0, class_transformer_1.Transform)(({ value }) => value?.toLowerCase()),
     __metadata("design:type", String)
 ], RequestPasswordResetDto.prototype, "email", void 0);
 //# sourceMappingURL=request-password-reset.dto.js.map

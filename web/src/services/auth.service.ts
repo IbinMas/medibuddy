@@ -33,8 +33,12 @@ export const AuthService = {
     const response = await api.post(`/auth/invites/${inviteId}/revoke`);
     return response.data;
   },
-  verifyEmail: async (code: string) => {
-    const response = await api.post('/auth/verify-email', { code });
+  requestPasswordReset: async (email: string) => {
+    const response = await api.post('/auth/request-password-reset', { email });
+    return response.data;
+  },
+  resetPassword: async (data: { code: string; password: string }) => {
+    const response = await api.post('/auth/reset-password', data);
     return response.data;
   },
   acceptInvite: async (data: any) => {

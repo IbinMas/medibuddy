@@ -42,8 +42,12 @@ describe('PatientService tenant isolation', () => {
     (prisma.patient.findFirst as jest.Mock).mockResolvedValue({
       id: 'patient-1',
       pharmacyId: 'pharmacy-1',
-      nameEncrypted: encrypt('Jane Doe'),
+      firstNameEncrypted: encrypt('Jane'),
+      lastNameEncrypted: encrypt('Doe'),
       phoneEncrypted: encrypt('0200000000'),
+      allergiesEncrypted: null,
+      notesEncrypted: null,
+      notificationMedium: 'NONE',
       prescriptions: [],
     });
 
@@ -53,7 +57,8 @@ describe('PatientService tenant isolation', () => {
       where: { id: 'patient-1', pharmacyId: 'pharmacy-1', deletedAt: null },
       include: { prescriptions: { include: { adherence: true } } },
     });
-    expect(result?.name).toBe('Jane Doe');
+    expect(result?.firstName).toBe('Jane');
+    expect(result?.lastName).toBe('Doe');
     expect(result?.phone).toBe('0200000000');
   });
 });

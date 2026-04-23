@@ -53,7 +53,6 @@ export class CommunicationService {
   ) {
     const page = Number(query.page) || 1;
     const limit = Number(query.limit) || 20;
-    const skip = (page - 1) * limit;
 
     const where: any = { pharmacyId };
 
@@ -74,8 +73,6 @@ export class CommunicationService {
           },
         },
         orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit,
       }),
       this.prisma.communicationLog.count({ where }),
     ]);
@@ -90,12 +87,32 @@ export class CommunicationService {
       }
     }));
 
+    const search = query.search?.trim().toLowerCase();
+    const filteredLogs = search
+      ? decryptedLogs.filter((log: any) => {
+          const content = String(log.content ?? '').toLowerCase();
+          const firstName = String(log.patient?.firstName ?? '').toLowerCase();
+          const lastName = String(log.patient?.lastName ?? '').toLowerCase();
+          const phone = String(log.patient?.phone ?? '').toLowerCase();
+          return (
+            content.includes(search) ||
+            firstName.includes(search) ||
+            lastName.includes(search) ||
+            phone.includes(search)
+          );
+        })
+      : decryptedLogs;
+
+    const filteredTotal = search ? filteredLogs.length : total;
+    const startIndex = (page - 1) * limit;
+    const paginatedData = filteredLogs.slice(startIndex, startIndex + limit);
+
     return {
-      data: decryptedLogs,
-      total,
+      data: paginatedData,
+      total: filteredTotal,
       page,
       limit,
-      totalPages: Math.ceil(total / limit),
+      totalPages: Math.ceil(filteredTotal / limit),
     };
   }
 }

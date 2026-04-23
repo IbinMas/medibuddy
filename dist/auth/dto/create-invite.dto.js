@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateInviteDto = void 0;
 const class_validator_1 = require("class-validator");
+const class_transformer_1 = require("class-transformer");
 const client_1 = require("@prisma/client");
 class CreateInviteDto {
     email;
@@ -19,6 +20,7 @@ class CreateInviteDto {
 exports.CreateInviteDto = CreateInviteDto;
 __decorate([
     (0, class_validator_1.IsEmail)(),
+    (0, class_transformer_1.Transform)(({ value }) => value?.toLowerCase()),
     __metadata("design:type", String)
 ], CreateInviteDto.prototype, "email", void 0);
 __decorate([

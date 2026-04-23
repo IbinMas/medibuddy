@@ -74,20 +74,6 @@ let MailerService = MailerService_1 = class MailerService {
             response: info.response,
         };
     }
-    async sendVerificationEmail(mail) {
-        const subject = `Verify your MediBuddy email`;
-        const text = [
-            `Please verify your email for ${mail.pharmacyName}.`,
-            `Verify here: ${mail.verifyUrl}`,
-            `If you did not request this, you can ignore this email.`,
-        ].join('\n\n');
-        const html = `
-      <p>Please verify your email for <strong>${escapeHtml(mail.pharmacyName)}</strong>.</p>
-      <p><a href="${escapeHtml(mail.verifyUrl)}">Verify email</a></p>
-      <p>If you did not request this, you can ignore this email.</p>
-    `;
-        return this.sendWithFallback(mail.to, subject, text, html, mail.verifyUrl);
-    }
     async sendPasswordResetEmail(mail) {
         const subject = `Reset your MediBuddy password`;
         const text = [

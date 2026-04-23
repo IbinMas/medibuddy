@@ -48,7 +48,6 @@ const client_1 = require("@prisma/client");
 const bcrypt = __importStar(require("bcryptjs"));
 const prisma_service_1 = require("../database/prisma.service");
 const mailer_service_1 = require("../common/mailer/mailer.service");
-const crypto_1 = require("crypto");
 let PharmacyService = class PharmacyService {
     prisma;
     mailerService;
@@ -74,7 +73,7 @@ let PharmacyService = class PharmacyService {
                             email: dto.adminEmail,
                             password: await bcrypt.hash(dto.password, 10),
                             role: client_1.Role.ADMIN,
-                            emailVerifiedAt: null,
+                            emailVerifiedAt: new Date(),
                         },
                     },
                     subscriptions: {
@@ -101,15 +100,6 @@ let PharmacyService = class PharmacyService {
                 },
             });
             const adminUser = pharmacy.users[0];
-            const verificationToken = await tx.authToken.create({
-                data: {
-                    userId: adminUser.id,
-                    email: adminUser.email,
-                    type: client_1.AuthTokenType.EMAIL_VERIFICATION,
-                    code: (0, crypto_1.randomUUID)(),
-                    expiresAt: addHours(new Date(), 24),
-                },
-            });
             await tx.auditLog.create({
                 data: {
                     pharmacyId: pharmacy.id,
@@ -120,19 +110,9 @@ let PharmacyService = class PharmacyService {
                     metadata: { plan: pharmacy.plan, status: 'ONBOARDED' },
                 },
             });
-            return { pharmacy, verificationToken, adminUser };
+            return { pharmacy, adminUser };
         });
-        const verificationUrl = `${buildAppBaseUrl()}/verify-email?code=${encodeURIComponent(result.verificationToken.code)}`;
-        const verificationEmailResult = await this.mailerService.sendVerificationEmail({
-            to: result.adminUser.email,
-            pharmacyName: result.pharmacy.name,
-            verifyUrl: verificationUrl,
-        });
-        return {
-            ...result.pharmacy,
-            verificationUrl,
-            verificationEmailResult,
-        };
+        return result.pharmacy;
     }
     findOne(pharmacyId) {
         return this.prisma.pharmacy.findUnique({

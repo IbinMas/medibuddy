@@ -8,6 +8,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var PrescriptionService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PrescriptionService = void 0;
 const common_1 = require("@nestjs/common");
@@ -17,12 +18,13 @@ const audit_service_1 = require("../audit/audit.service");
 const reminder_queue_service_1 = require("../queue/reminder-queue.service");
 const whatsapp_service_1 = require("../common/whatsapp/whatsapp.service");
 const sms_service_1 = require("../common/sms/sms.service");
-let PrescriptionService = class PrescriptionService {
+let PrescriptionService = PrescriptionService_1 = class PrescriptionService {
     prisma;
     auditService;
     reminderQueue;
     whatsappService;
     smsService;
+    logger = new common_1.Logger(PrescriptionService_1.name);
     constructor(prisma, auditService, reminderQueue, whatsappService, smsService) {
         this.prisma = prisma;
         this.auditService = auditService;
@@ -34,6 +36,15 @@ let PrescriptionService = class PrescriptionService {
         return this.bulkCreate(pharmacyId, userId, [dto]);
     }
     async bulkCreate(pharmacyId, userId, dtos) {
+        for (const dto of dtos) {
+            const patient = await this.prisma.patient.findFirst({
+                where: { id: dto.patientId, pharmacyId, deletedAt: null },
+                select: { id: true },
+            });
+            if (!patient) {
+                throw new common_1.NotFoundException('Patient not found');
+            }
+        }
         const results = await this.prisma.$transaction(async (tx) => {
             const creations = [];
             for (const dto of dtos) {
@@ -64,8 +75,22 @@ let PrescriptionService = class PrescriptionService {
             if (patient.notificationMedium === 'WHATSAPP') {
                 await this.whatsappService.sendGroupedPrescriptionMessage(patient, pharmacy, results);
             }
-            else {
-                await this.smsService.sendGroupedPrescriptionMessage(patient, pharmacy, results);
+            else if (patient.notificationMedium === 'SMS') {
+                this.logger.log(`Sending grouped SMS for ${results.length} prescriptions...`);
+                const smsResponse = await this.smsService.sendGroupedPrescriptionMessage(patient, pharmacy, results);
+                this.logger.log(`SMS Response: ${JSON.stringify(smsResponse)}`);
+                if (smsResponse.success && smsResponse.messageId) {
+                    const ids = results.map(r => r.id);
+                    this.logger.log(`Updating ${ids.length} prescriptions with messageId: ${smsResponse.messageId}. IDs: ${ids.join(', ')}`);
+                    const updateResult = await this.prisma.prescription.updateMany({
+                        where: { id: { in: ids } },
+                        data: { messageId: String(smsResponse.messageId) }
+                    });
+                    this.logger.log(`Update call finished. count: ${updateResult.count}`);
+                }
+                else {
+                    this.logger.warn(`Failed to update prescriptions: Success=${smsResponse.success}, messageId=${smsResponse.messageId}, mode=${smsResponse.mode}`);
+                }
             }
         }
         // Single Audit Log for the batch
@@ -123,7 +148,7 @@ let PrescriptionService = class PrescriptionService {
     }
 };
 exports.PrescriptionService = PrescriptionService;
-exports.PrescriptionService = PrescriptionService = __decorate([
+exports.PrescriptionService = PrescriptionService = PrescriptionService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         audit_service_1.AuditService,

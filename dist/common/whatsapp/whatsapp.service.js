@@ -5,6 +5,9 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -13,16 +16,22 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.WhatsappService = void 0;
 const common_1 = require("@nestjs/common");
 const encryption_1 = require("../crypto/encryption");
+const communication_service_1 = require("../communication/communication.service");
+const client_1 = require("@prisma/client");
 const axios_1 = __importDefault(require("axios"));
 let WhatsappService = WhatsappService_1 = class WhatsappService {
+    communicationService;
     logger = new common_1.Logger(WhatsappService_1.name);
     accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
     phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
     apiVersion = process.env.WHATSAPP_API_VERSION || 'v20.0';
+    constructor(communicationService) {
+        this.communicationService = communicationService;
+    }
     async sendPrescriptionMessage(patient, pharmacy, prescription) {
         const firstName = (0, encryption_1.decrypt)(patient.firstNameEncrypted).trim();
         const lastName = (0, encryption_1.decrypt)(patient.lastNameEncrypted).trim();
-        const phone = +233245724489 || this.formatPhoneNumber((0, encryption_1.decrypt)(patient.phoneEncrypted));
+        const phone = this.formatPhoneNumber((0, encryption_1.decrypt)(patient.phoneEncrypted));
         const medication = (0, encryption_1.decrypt)(prescription.medicationEncrypted);
         const message = [
             `*New Prescription from ${pharmacy.name}*`,
@@ -77,11 +86,30 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
                     'Content-Type': 'application/json',
                 },
             });
-            this.logger.log(`WhatsApp Template sent to ${phone}. Message ID: ${response.data.messages[0]?.id}`);
-            return { success: true, messageId: response.data.messages[0]?.id };
+            const messageId = response.data.messages[0]?.id;
+            this.logger.log(`WhatsApp Template sent to ${phone}. Message ID: ${messageId}`);
+            await this.communicationService.logMessage({
+                pharmacyId: pharmacy.id,
+                patientId: patient.id,
+                prescriptionId: prescription.id,
+                medium: client_1.NotificationMedium.WHATSAPP,
+                providerId: messageId ? String(messageId) : undefined,
+                status: client_1.DeliveryStatus.PENDING,
+                content: message,
+            });
+            return { success: true, messageId };
         }
         catch (error) {
-            this.logger.error(`Failed to send WhatsApp Template to ${phone}: ${error.response?.data?.error?.message || error.message}`);
+            const errorMsg = error.response?.data?.error?.message || error.message;
+            this.logger.error(`Failed to send WhatsApp Template to ${phone}: ${errorMsg}`);
+            await this.communicationService.logMessage({
+                pharmacyId: pharmacy.id,
+                patientId: patient.id,
+                prescriptionId: prescription.id,
+                medium: client_1.NotificationMedium.WHATSAPP,
+                status: client_1.DeliveryStatus.FAILED,
+                content: message,
+            });
             return { success: false, error: error.response?.data?.error || error.message };
         }
     }
@@ -133,11 +161,28 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
                     'Content-Type': 'application/json',
                 },
             });
-            this.logger.log(`WhatsApp Grouped Prescription sent to ${phone}. Message ID: ${response.data.messages[0]?.id}`);
-            return { success: true, messageId: response.data.messages[0]?.id };
+            const messageId = response.data.messages[0]?.id;
+            this.logger.log(`WhatsApp Grouped Prescription sent to ${phone}. Message ID: ${messageId}`);
+            await this.communicationService.logMessage({
+                pharmacyId: pharmacy.id,
+                patientId: patient.id,
+                medium: client_1.NotificationMedium.WHATSAPP,
+                providerId: messageId ? String(messageId) : undefined,
+                status: client_1.DeliveryStatus.PENDING,
+                content: message,
+            });
+            return { success: true, messageId };
         }
         catch (error) {
-            this.logger.error(`Failed to send WhatsApp Grouped Prescription to ${phone}: ${error.response?.data?.error?.message || error.message}`);
+            const errorMsg = error.response?.data?.error?.message || error.message;
+            this.logger.error(`Failed to send WhatsApp Grouped Prescription to ${phone}: ${errorMsg}`);
+            await this.communicationService.logMessage({
+                pharmacyId: pharmacy.id,
+                patientId: patient.id,
+                medium: client_1.NotificationMedium.WHATSAPP,
+                status: client_1.DeliveryStatus.FAILED,
+                content: message,
+            });
             return { success: false, error: error.response?.data?.error || error.message };
         }
     }
@@ -189,11 +234,28 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
                     'Content-Type': 'application/json',
                 },
             });
-            this.logger.log(`WhatsApp Grouped Reminder sent to ${phone}. Message ID: ${response.data.messages[0]?.id}`);
-            return { success: true, messageId: response.data.messages[0]?.id };
+            const messageId = response.data.messages[0]?.id;
+            this.logger.log(`WhatsApp Grouped Reminder sent to ${phone}. Message ID: ${messageId}`);
+            await this.communicationService.logMessage({
+                pharmacyId: pharmacy.id,
+                patientId: patient.id,
+                medium: client_1.NotificationMedium.WHATSAPP,
+                providerId: messageId ? String(messageId) : undefined,
+                status: client_1.DeliveryStatus.PENDING,
+                content: message,
+            });
+            return { success: true, messageId };
         }
         catch (error) {
-            this.logger.error(`Failed to send WhatsApp Grouped Template to ${phone}: ${error.response?.data?.error?.message || error.message}`);
+            const errorMsg = error.response?.data?.error?.message || error.message;
+            this.logger.error(`Failed to send WhatsApp Grouped Template to ${phone}: ${errorMsg}`);
+            await this.communicationService.logMessage({
+                pharmacyId: pharmacy.id,
+                patientId: patient.id,
+                medium: client_1.NotificationMedium.WHATSAPP,
+                status: client_1.DeliveryStatus.FAILED,
+                content: message,
+            });
             return { success: false, error: error.response?.data?.error || error.message };
         }
     }
@@ -212,6 +274,7 @@ let WhatsappService = WhatsappService_1 = class WhatsappService {
 };
 exports.WhatsappService = WhatsappService;
 exports.WhatsappService = WhatsappService = WhatsappService_1 = __decorate([
-    (0, common_1.Injectable)()
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [communication_service_1.CommunicationService])
 ], WhatsappService);
 //# sourceMappingURL=whatsapp.service.js.map
